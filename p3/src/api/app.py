@@ -42,7 +42,13 @@ class MSGSpecRoute(APIRoute):
         return custom_route_handler
 
 
-app = FastAPI()
+app = FastAPI(
+    title="Derailed API",
+    description="OpenAPI documentation of the Derailed API",
+    version="0.1.0",
+    default_response_class=MSGSpecResponse,
+)
+app.router.route_class = MSGSpecRoute
 
 
 @app.exception_handler(Err)
