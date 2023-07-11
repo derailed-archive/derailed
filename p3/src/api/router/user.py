@@ -94,7 +94,7 @@ async def modify_current_user(
     return to_dict(user, "private")
 
 
-@router.delete("/@me")
+@router.delete("/@me", status_code=204)
 async def delete_current_user(
     model: DeleteUser, user: Annotated[User, Depends(get_user)]
 ):
