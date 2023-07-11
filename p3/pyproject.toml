@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "p3"
+version = "0.1.0"
+description = "The Derailed Python package"
+authors = ["VincentRPS <vincentbusiness55@gmail.com>"]
+license = "CPAL"
+readme = "README.md"
+packages = [
+    { include = "api", from = "src" },
+    { include = "models", from = "src" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+tortoise-orm = {extras = ["accel", "asyncpg"], version = "^0.19.3"}
+fastapi = "^0.100.0"
+msgspec = "^0.16.0"
+jwt = "^1.3.1"
+python-dotenv = "^1.0.0"
+uvloop = {version = "^0.17.0", platform = "linux"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
