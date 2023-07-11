@@ -61,3 +61,4 @@ class Message(Model):
     author_id = fields.ForeignKeyField("models.User", "id")
     timestamp = fields.DatetimeField(auto_now_add=True)
     edited_timestamp = fields.DatetimeField(auto_now=True)
+    referenced_message_id = fields.ForeignKeyField("models.Message", "id", null=True, on_delete=fields.SET_DEFAULT, default=0)
