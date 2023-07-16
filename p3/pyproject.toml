@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "p3"
+name = "blackcomb"
 version = "0.1.0"
 description = "The Derailed Python package"
 authors = ["VincentRPS <vincentbusiness55@gmail.com>"]
