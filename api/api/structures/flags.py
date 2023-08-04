@@ -37,22 +37,22 @@ class Permissions(IntEnum):
 
     ADMINISTRATOR = 1 << 0
 
-    # management
+    # I: management
     MANAGE_CHANNELS = 1 << 1
     MANAGE_ROLES = 1 << 2
     MANAGE_INVITES = 1 << 3
     MANAGE_CHANNEL_HISTORY = 1 << 4
     MANAGE_GUILD = 1 << 5
 
-    # moderation
+    # II: moderation
     HANDLE_BANS = 1 << 6
     HANDLE_KICKS = 1 << 7
 
-    # viewing
+    # III: viewing
     VIEW_CHANNELS = 1 << 8
     VIEW_CHANNEL_HISTORY = 1 << 9
 
-    # creations
+    # IV: creations
     CREATE_INVITES = 1 << 10
     CREATE_MESSAGES = 1 << 11
 
