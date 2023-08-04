@@ -1,4 +1,4 @@
-from enum import IntEnum, IntFlag
+from enum import IntEnum, IntFlag, StrEnum
 
 
 class UserFlags(IntFlag):
@@ -64,3 +64,7 @@ for attr in dir(Permissions):
     val = getattr(attr)
     if isinstance(val, Permissions):
         setattr(ALL_PERMISSIONS, attr, True)
+
+
+class Features(StrEnum):
+    ...
