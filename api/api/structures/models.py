@@ -25,12 +25,14 @@ class User(TypedDict):
 
 
 class UseUser:
-    def __init__(self, *fields: str) -> None:
-        self.fields = fields
+    def __init__(self, *fields: str, optional: bool = False) -> None:
+        self.fields = list(fields)
+        self.fields.sort()
+        self.optional = optional
 
     async def __call__(
         self, authorization: Annotated[str, Path()], db: Annotated[DB, Depends(use_db)]
-    ) -> User:
+    ) -> User | None:
         token = verify_token(authorization)
 
         user = await fetchrow(
@@ -38,6 +40,8 @@ class UseUser:
         )
 
         if user is None:
+            if self.optional:
+                return None
             raise Err("invalid token", 401)
 
         device = await fetchrow(
@@ -45,9 +49,14 @@ class UseUser:
         )
 
         if device is None:
+            if self.optional:
+                return None
             raise Err("device of token has been invalidated", 401)
 
         return user
+
+    def __eq__(self, other: "UseUser") -> bool:
+        return self.fields == other.fields
 
 
 @final
@@ -65,8 +74,7 @@ class Guild(TypedDict):
     system_channel_id: NotRequired[int | None]
     type: NotRequired[Literal["nsfw", "community"]]
     max_members: NotRequired[int]
-    allow: NotRequired[int]
-    deny: NotRequired[int]
+    permissions: NotRequired[int]
     member: NotRequired[Member]
     channels: NotRequired[list[Channel]]
     roles: NotRequired[list[Role]]
@@ -124,8 +132,7 @@ async def get_permset(hero: Hero, db: DB) -> Permissions:
     if hero.guild["owner_id"] == hero.user["id"]:
         return ALL_PERMISSIONS
 
-    base = hero.guild["deny"]
-    base |= hero.guild["allow"]
+    base = hero.guild["permissions"]
 
     # NOTE: roles take precedant over guild aka @everyone.
     role_permissions = await fetch(

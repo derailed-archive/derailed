@@ -7,6 +7,7 @@ from pydantic import BaseModel, EmailStr, Field
 
 from ..auth import create_token
 from ..controllers.dbs import DB, use_db
+from ..controllers.rate_limiter import UnscopedRateLimiter
 from ..controllers.rpc import publish_user
 from ..error import Err
 from ..identity import make_snowflake
@@ -14,7 +15,7 @@ from ..structures.flags import DEFAULT_USER_FLAGS
 from ..structures.models import User, UseUser
 from ..utils import MISSING, Maybe, commit, create_update, fetch, fetchrow
 
-users = APIRouter()
+users = APIRouter(dependencies=[Depends(UnscopedRateLimiter("guild", 20, 1))])
 
 
 class CreateUser(BaseModel):

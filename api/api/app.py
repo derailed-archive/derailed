@@ -1,10 +1,11 @@
 from typing import Any, Callable, TypedDict, final
 
 import msgspec
-from fastapi import FastAPI, Request, Response
+from fastapi import Depends, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
+from .controllers.rate_limiter import UnscopedRateLimiter
 from .error import Err
 
 
@@ -36,6 +37,7 @@ class MSGSpecRoute(APIRoute):
 
 app = FastAPI(
     default_response_class=MSGSpecResponse,
+    dependencies=[Depends(UnscopedRateLimiter("global", 80, 60, True))],
 )
 app.router.route_class = MSGSpecRoute
 

@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from ..controllers.dbs import DB, use_db
+from ..controllers.rate_limiter import ScopedRateLimiter, UnscopedRateLimiter
 from ..controllers.rpc import publish_guild, publish_user
 from ..error import Err
 from ..identity import make_snowflake
@@ -19,7 +20,7 @@ from ..structures.models import (
 )
 from ..utils import MISSING, Maybe, commit, create_update, fetchrow, now
 
-guilds = APIRouter()
+guilds = APIRouter(dependencies=[Depends(UnscopedRateLimiter("guild", 20, 1))])
 
 
 class CreateGuild(BaseModel):
@@ -28,8 +29,7 @@ class CreateGuild(BaseModel):
 
 
 class ModifyGuild(BaseModel):
-    allow: Maybe[int] = MISSING
-    deny: Maybe[int] = MISSING
+    permissions: Maybe[int] = MISSING
     name: Maybe[str] = Field(MISSING, min_length=1, max_length=32)
     # TODO!: This requires needing to send a password.
     # owner_id
@@ -40,7 +40,7 @@ class DeleteGuild(BaseModel):
     password: str = Field(min_length=8, max_length=100)
 
 
-@guilds.post("/guilds")
+@guilds.post("/guilds", dependencies=[Depends(ScopedRateLimiter(2, 120))])
 async def create_guild(
     model: CreateGuild,
     db: Annotated[DB, Depends(use_db)],
@@ -121,8 +121,7 @@ async def create_guild(
 
     guild: Guild = {
         "id": guild_id,
-        "allow": 0,
-        "deny": 0,
+        "permissions": 0,
         "features": [],
         "name": model.name,
         "icon": None,
@@ -185,7 +184,7 @@ async def create_guild(
     return guild
 
 
-@guilds.patch("/guilds/{guild_id}")
+@guilds.patch("/guilds/{guild_id}", dependencies=[ScopedRateLimiter()])
 async def modify_guild(
     model: ModifyGuild,
     db: Annotated[DB, Depends(use_db)],
@@ -196,8 +195,7 @@ async def modify_guild(
                 "roles",
                 guild_fields=[
                     "id",
-                    "allow",
-                    "deny",
+                    "permissions",
                     "features",
                     "name",
                     "icon",
@@ -225,15 +223,10 @@ async def modify_guild(
         changed_fields.append("name")
         field_values.append(model.name)
 
-    if model.allow:
-        guild["allow"] = model.allow
-        changed_fields.append("allow")
-        field_values.append(model.allow)
-
-    if model.deny:
-        guild["deny"] = model.deny
-        changed_fields.append("deny")
-        field_values.append(model.deny)
+    if model.permissions:
+        guild["permissions"] = model.permissions
+        changed_fields.append("permissions")
+        field_values.append(model.permissions)
 
     if model.system_channel_id:
         row = await fetchrow(
@@ -262,7 +255,7 @@ async def modify_guild(
     return guild
 
 
-@guilds.delete("/guilds/{guild_id}")
+@guilds.delete("/guilds/{guild_id}", dependencies=[ScopedRateLimiter(5, 120)])
 async def delete_guild(
     model: DeleteGuild,
     db: Annotated[DB, Depends(use_db)],
@@ -273,18 +266,11 @@ async def delete_guild(
                 "roles",
                 guild_fields=[
                     "id",
-                    "allow",
-                    "deny",
-                    "features",
-                    "name",
-                    "icon",
-                    "max_members",
                     "owner_id",
-                    "system_channel_id",
-                    "type",
                 ],
             )
         ),
     ],
 ) -> Guild:
-    permset = await get_permset(hero, db)
+    if hero.user["id"] != hero.guild["owner_id"]:
+        raise Err
