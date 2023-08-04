@@ -2,7 +2,7 @@ import os
 import threading
 import time
 
-__all__ = "snowflake"
+__all__ = ("make_snowflake", "make_bucket", "make_buckets")
 
 
 BUCKET_SIZE = 1000 * 60 * 60 * 24 * 7
