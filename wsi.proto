@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+import "google/protobuf/any.proto";
+import "google/protobuf/empty.proto";
+
+package derailed.wsi;
+
+service WSI {
+    rpc publish_guild (Interchange) returns (google.protobuf.Empty);
+    rpc publish_user (Interchange) returns (google.protobuf.Empty);
+    rpc multipublish (BulkInterchange) returns (google.protobuf.Empty);
+    rpc get_activity (GuildInfo) returns (GuildMetadata);
+}
+
+message Interchange {
+    string t = 1;
+    int64 id = 2;
+    google.protobuf.Any d = 3;
+}
+
+message BulkInterchange {
+    string t = 1;
+    repeated int64 uids = 2;
+    google.protobuf.Any d = 3;
+}
+
+message GuildInfo {
+    int64 id = 1;
+}
+
+message GuildMetadata {
+    bool available = 1;
+    int32 presences = 2;
+}
