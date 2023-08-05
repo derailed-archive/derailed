@@ -120,7 +120,7 @@ class GuildModel(BaseObject[Guild]):
     id: int
     name: str = MISSING
     icon: Maybe[str | None] = MISSING
-    owner_id: int = MISSING
+    owner_id: int
     features: list[Features]
     system_channel_id: Maybe[int | None] = MISSING
     type: Maybe[Literal["nsfw", "community"]] = MISSING
