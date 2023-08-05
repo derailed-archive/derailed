@@ -225,6 +225,9 @@ class Channel(TypedDict):
     parent_id: NotRequired[int | None]
 
 
+# ↓ ScyllaDB-related models.
+
+
 @final
 class ChannelMention(TypedDict):
     channel_id: int
