@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "mig25"
+version = "0.0.0"
+description = "Derailed Migrations tool for Scylla and Postgres"
+authors = ["VincentRPS <vincentbusiness55@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+scylla-driver = "^3.26.2"
+typer = {extras = ["all"], version = "^0.9.0"}
+psycopg = "^3.1.9"
+
+[tool.poetry.group.dev.dependencies]
+black = "^23.7.0"
+isort = "^5.12.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
