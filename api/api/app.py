@@ -1,5 +1,9 @@
 from typing import Any, Callable, TypedDict, final
 
+import dotenv
+
+dotenv.load_dotenv()
+
 import msgspec
 from fastapi import Depends, FastAPI, Request, Response
 from fastapi.responses import JSONResponse

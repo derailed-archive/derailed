@@ -4,8 +4,8 @@ from typing import Annotated
 import redis.asyncio as redis
 from fastapi import Depends, Path, Request, Response
 
+from ..eludris.models import User, UseUser
 from ..error import Err
-from ..structures.models import User, UseUser
 from .dbs import use_redis
 
 

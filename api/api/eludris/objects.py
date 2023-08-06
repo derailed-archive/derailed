@@ -1,6 +1,8 @@
 from dataclasses import dataclass
 from typing import Any, Generic, Literal, Self, Type, TypeVar
 
+from api.api.eludris.models import Guild
+
 from ..controllers.dbs import DB
 from ..utils import MISSING, Maybe, commit
 from .flags import Features, Permissions
@@ -37,7 +39,7 @@ class BaseObject(Generic[T]):
             else:
                 mapping[attr] = val
 
-        return mapping
+        return self.convert_obj(mapping)
 
     @classmethod
     def load(cls: Type[BSO], map: T) -> Self:
@@ -62,6 +64,9 @@ class BaseObject(Generic[T]):
     def parse_obj(self) -> None:
         pass
 
+    def convert_obj(self, obj: T) -> T:
+        return obj
+
     async def insert(self, db: DB) -> None:
         pass
 
@@ -79,6 +84,15 @@ class BaseObject(Generic[T]):
 
         for change in changes:
             await commit(f"UPDATE {self._table} SET {change[0]} = $1;", db, change[1])
+
+    def cold_save(self) -> None:
+        for k, v in self._props.copy().items():
+            attr = getattr(self, k)
+
+            if attr != v:
+                if v is MISSING:
+                    continue
+                self._props[k] = v
 
     @classmethod
     async def from_id(cls, id: int) -> Self:
@@ -98,7 +112,7 @@ class ObjectList(list[BaseObject]):
         return [obj.__dict__ for obj in self]
 
 
-@dataclass(slots=True, kw_only=True)
+@dataclass(kw_only=True)
 class GuildModel(BaseObject[Guild]):
     _table = "guilds"
 
@@ -112,7 +126,14 @@ class GuildModel(BaseObject[Guild]):
     max_members: Maybe[int] = MISSING
     permissions: Maybe[Permissions] = MISSING
 
-    parse_permissions = parse_to_int
-    parse_features = parse_to_str
-    convert_permissions = parse_to_flag(Permissions)
-    convert_features = parse_to_flag(Features)
+    def parse_obj(self) -> None:
+        if self.permissions:
+            self.permissions = parse_to_flag(Permissions, self.permissions)
+        self.features = [parse_to_flag(Features, v) for v in self.features]
+        self.cold_save()
+
+    def convert_obj(self, obj: Guild) -> Guild:
+        if self.permissions:
+            obj["permissions"] = int(self.permissions)
+        obj["features"] = [str(f) for f in self.features]
+        return obj

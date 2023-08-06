@@ -6,18 +6,10 @@ from pydantic import BaseModel, Field
 from ..controllers.dbs import DB, use_db
 from ..controllers.rate_limiter import ScopedRateLimiter, UnscopedRateLimiter
 from ..controllers.rpc import publish_guild, publish_user
+from ..eludris.flags import ChannelTypes, MessageFlags
+from ..eludris.models import Guild, Hero, Message, UseMember, User, UseUser, get_permset
 from ..error import Err
 from ..identity import make_snowflake
-from ..structures.flags import ChannelTypes, MessageFlags
-from ..structures.models import (
-    Guild,
-    Hero,
-    Message,
-    UseMember,
-    User,
-    UseUser,
-    get_permset,
-)
 from ..utils import MISSING, Maybe, commit, create_update, fetchrow, now
 
 guilds = APIRouter(dependencies=[Depends(UnscopedRateLimiter("guild", 20, 1))])

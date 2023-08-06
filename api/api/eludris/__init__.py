@@ -1,6 +1,6 @@
 """
-api.structures
-~~~~~~~~~~~~~~
+api.eludris
+~~~~~~~~~~~
 Structures for the Derailed API
 """
 
