@@ -41,6 +41,9 @@ class _Scyx(threading.Thread):
     def all(self, query: str, args: tuple, keyspace: str, type: T) -> list[T]:
         return self._execute(query, args, keyspace).all()
 
+    def execute(self, query: str, args: tuple, keyspace: str) -> None:
+        self._execute(query, args, keyspace)
+
 
 class ScyllaDB:
     def __init__(self) -> None:
@@ -67,5 +70,8 @@ class ScyllaDB:
             self._thread, self._thread.one, query, args, keyspace, type
         )
 
-
-SCYX = ScyllaDB()
+    async def execute(self, keyspace: str, query: str, args: tuple = ()) -> T | None:
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(
+            self._thread, self._thread.execute, query, args, keyspace
+        )

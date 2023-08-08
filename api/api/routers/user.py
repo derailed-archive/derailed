@@ -13,7 +13,7 @@ from ..eludris.flags import DEFAULT_USER_FLAGS
 from ..eludris.models import User, UseUser
 from ..error import Err
 from ..identity import make_snowflake
-from ..utils import MISSING, Maybe, commit, create_update, fetch, fetchrow
+from ..utils import MISSING, Maybe, commit, create_update, f1, fetch
 
 users = APIRouter(dependencies=[Depends(UnscopedRateLimiter("guild", 20, 1))])
 
@@ -166,7 +166,7 @@ async def get_user(
     db: Annotated[DB, Depends(use_db)],
     _user: Annotated[User, Depends(UseUser("id"))],
 ) -> User:
-    user = await fetchrow(
+    user = await f1(
         "SELECT (id, username, flags, display_name, bot, avatar) FROM users WHERE id = $1;",
         db,
         user_id,

@@ -10,7 +10,7 @@ from ..eludris.flags import ChannelTypes, MessageFlags
 from ..eludris.models import Guild, Hero, Message, UseMember, User, UseUser, get_permset
 from ..error import Err
 from ..identity import make_snowflake
-from ..utils import MISSING, Maybe, commit, create_update, fetchrow, now
+from ..utils import MISSING, Maybe, commit, create_update, f1, now
 
 guilds = APIRouter(dependencies=[Depends(UnscopedRateLimiter("guild", 20, 1))])
 
@@ -221,7 +221,7 @@ async def modify_guild(
         field_values.append(model.permissions)
 
     if model.system_channel_id:
-        row = await fetchrow(
+        row = await f1(
             "SELECT (id) FROM channels WHERE id = $1 AND type = $2;",
             db,
             model.system_channel_id,

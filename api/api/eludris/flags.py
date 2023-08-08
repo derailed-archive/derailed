@@ -68,3 +68,8 @@ for attr in dir(Permissions):
 
 class Features(StrEnum):
     ...
+
+
+class Theme(StrEnum):
+    DARK = "dark"
+    LIGHT = "light"

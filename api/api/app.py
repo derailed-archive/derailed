@@ -2,6 +2,8 @@ from typing import Any, Callable, TypedDict, final
 
 import dotenv
 
+from .eludris.objects import BaseObject, ObjectList
+
 dotenv.load_dotenv()
 
 import msgspec
@@ -17,6 +19,11 @@ class MSGSpecResponse(JSONResponse):
     media_type = "application/json"
 
     def render(self, content: Any) -> bytes:
+        if isinstance(content, BaseObject):
+            content = dict(content)
+        elif isinstance(content, ObjectList):
+            content = content.representable()
+
         return msgspec.json.encode(content)
 
 

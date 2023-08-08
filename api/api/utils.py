@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Literal, TypeVar, Union
+from typing import TYPE_CHECKING, Literal, TypeVar, Union
 
 import pydantic
 
@@ -40,7 +40,7 @@ async def fetch(query: str, db: DB, *args) -> list[dict]:
     return await stmt.fetch(*args)
 
 
-async def fetchrow(query: str, db: DB, *args) -> dict | None:
+async def f1(query: str, db: DB, *args) -> dict | None:
     stmt = await db.prepare(query)
     return await stmt.fetchrow(*args)
 
