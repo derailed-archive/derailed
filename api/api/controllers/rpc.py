@@ -21,7 +21,7 @@ class RPCController:
         ...
 
     async def get_activity(self, guild_id: int) -> GuildMetadata:
-        ...
+        return {"available": False, "presences": 0}
 
 
 rpc = RPCController()

@@ -1,10 +1,9 @@
 import hashlib
 from typing import Annotated
 
-import redis.asyncio as redis
+import redis.asyncio as redlib
 from fastapi import Depends, Path, Request, Response
 
-from ..eludris.models import User, UseUser
 from ..error import Err
 from .dbs import use_redis
 
@@ -24,12 +23,13 @@ class UnscopedRateLimiter:
     async def __call__(
         self,
         user: Annotated[User | None, Depends(UseUser(["id"], optional=True))],
+        redis: Annotated[redlib.Redis, Depends(use_redis)],
     ) -> None:
         if user is None:
             return
 
         unserialized_bucket_id = f"{self.bucket}:{user['id']}"
-        bucket_id = hashlib.md5(unserialized_bucket_id)
+        bucket_id = hashlib.md5(unserialized_bucket_id.encode()).hexdigest()
 
         bucket = await redis.get(bucket_id)
 
@@ -61,7 +61,7 @@ class ScopedRateLimiter:
         self,
         channel_id: Annotated[int | None, Path(None)],
         guild_id: Annotated[int | None, Path(None)],
-        redis: Annotated[redis.Redis, Depends(use_redis)],
+        redis: Annotated[redlib.Redis, Depends(use_redis)],
         user: Annotated[User | None, Depends(UseUser(["id"], optional=True))],
         request: Request,
         response: Response,
@@ -86,9 +86,9 @@ class ScopedRateLimiter:
         reset_after = await redis.ttl(bucket_id)
 
         response.headers["X-RateLimit-Bucket"] = bucket_id
-        response.headers["X-RateLimit-Limit"] = self.limit
-        response.headers["X-RateLimit-Reset-After"] = reset_after
-        response.headers["X-RateLimit-Remaining"] = remaining
+        response.headers["X-RateLimit-Limit"] = str(self.limit)
+        response.headers["X-RateLimit-Reset-After"] = str(reset_after)
+        response.headers["X-RateLimit-Remaining"] = str(remaining)
 
         if remaining == 0:
             raise Err(

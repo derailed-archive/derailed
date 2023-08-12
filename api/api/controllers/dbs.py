@@ -1,8 +1,10 @@
 import os
+from typing import Any
 
 import asyncpg
 import redis.asyncio as redis
 from asyncpg.pool import PoolConnectionProxy
+from asyncpg import Record
 
 
 class DatabaseController:
@@ -17,9 +19,9 @@ controller = DatabaseController()
 DB = PoolConnectionProxy
 
 
-async def use_db() -> DB:
+async def use_db() -> DB[Record]:
     return await controller.pool.acquire()
 
 
-async def use_redis() -> redis.Redis:
+async def use_redis() -> redis.Redis[Any]:
     return controller.redis

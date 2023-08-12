@@ -1,4 +1,4 @@
-from typing import Any, Callable, TypedDict, final
+from typing import Any, Callable, Coroutine, TypedDict, final
 
 import dotenv
 
@@ -20,7 +20,7 @@ class MSGSpecResponse(JSONResponse):
 
     def render(self, content: Any) -> bytes:
         if isinstance(content, BaseObject):
-            content = dict(content)
+            content = content.__object__
         elif isinstance(content, ObjectList):
             content = content.representable()
 
@@ -34,9 +34,10 @@ class MSGSpecRequest(Request):
             self._json = msgspec.json.decode(body)
         return self._json
 
+AsyncFunc = Callable[..., Coroutine[Any, Any, Any]]
 
 class MSGSpecRoute(APIRoute):
-    def get_route_handler(self) -> Callable:
+    def get_route_handler(self) -> AsyncFunc:
         original_route_handler = super().get_route_handler()
 
         async def custom_route_handler(request: Request) -> Response:
@@ -59,5 +60,5 @@ class Exc(TypedDict):
 
 
 @app.exception_handler(Err)
-async def exception(request: Request, exc: Err) -> Exc:
+async def exception(request: Request, exc: Err) -> MSGSpecResponse:
     return MSGSpecResponse({"detail": exc.detail}, exc.code)

@@ -9,7 +9,7 @@ class UserFlags(IntFlag):
 
 
 DEFAULT_USER_FLAGS = UserFlags(0)
-DEFAULT_USER_FLAGS.early_supporter = True
+DEFAULT_USER_FLAGS |= UserFlags.early_supporter
 
 
 class ChannelTypes(IntEnum):

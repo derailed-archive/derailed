@@ -1,5 +1,5 @@
 import os
-from typing import TypedDict
+from typing import Any, TypedDict, cast
 
 import jwt
 
@@ -19,11 +19,11 @@ class Token(TypedDict):
 
 def verify_token(token: str) -> Token:
     try:
-        token: Token = jwt.decode(token, secret, ["HS256"])
+        ret_token: dict[str, Any] = jwt.decode(token, secret, ["HS256"])
     except jwt.DecodeError:
         raise Err("token invalid", 401)
 
-    return token
+    return cast(Token, ret_token)
 
 
 def create_token(user_id: int) -> str:

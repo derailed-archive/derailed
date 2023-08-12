@@ -1,6 +1,0 @@
-# MIG25 migration configuration
-[environment]
-scylla_entrypoint = ["SCYLLA_URL HERE!"]
-
-[conf]
-add_year_name = true

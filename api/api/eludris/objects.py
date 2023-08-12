@@ -1,11 +1,8 @@
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Generic, Literal, Self, Type, TypeVar
-
-from api.api.eludris.models import ChannelData, MessageReactionData, SettingsData
+from typing import TYPE_CHECKING, Any, Literal, Self, Type, TypeVar
 
 from ..controllers.dbs import DB
-from ..scylla import ScyllaDB
 from ..utils import MISSING, Maybe, commit
 from .flags import (
     ChannelTypes,
@@ -18,34 +15,27 @@ from .flags import (
 )
 from .models import (
     ChannelData,
-    ChannelMentionData,
-    DeviceData,
     GuildData,
-    GuildPreviewData,
     MemberData,
     MessageData,
-    MessageReactionCounterData,
     MessageReactionData,
-    ReadStateData,
-    RoleData,
     SettingsData,
     UserData,
 )
-from .parsers import parse_to_flag
 
-T = TypeVar("T", bound=dict)
+T = TypeVar("T", bound=dict[str, Any])
 BSO = TypeVar("BSO", bound="BaseObject")
 
 
-class BaseObject(Generic[T]):
+class BaseObject:
     """Represents a mutable Derailed object."""
 
     _table: str
     _props: dict[str, Any]
 
     @property
-    def __dict__(self) -> T:
-        mapping: T = {}
+    def __object__(self) -> Any:
+        mapping: dict[str, Any] = {}
 
         for attr, val in self._props.items():
             if val is MISSING:
@@ -66,7 +56,7 @@ class BaseObject(Generic[T]):
         return self.convert_obj(mapping)
 
     @classmethod
-    def load(cls: Type[BSO], map: T) -> Self:
+    def load(cls: Type[Self], map: dict[str, Any]) -> Self:
         for k, v in map.items():
             aname = "convert_" + k
 
@@ -88,7 +78,7 @@ class BaseObject(Generic[T]):
     def parse_obj(self) -> None:
         pass
 
-    def convert_obj(self, obj: T) -> T:
+    def convert_obj(self, obj: Any) -> Any:
         return obj
 
     async def insert(self, db: DB) -> None:
@@ -123,38 +113,35 @@ class BaseObject(Generic[T]):
     async def from_id(cls, id: int) -> Self:
         raise NotImplementedError
 
-    async def delete(self, id: int, db: DB, delete_key: str = "id") -> None:
+
+class NeedsDelete(BaseObject):
+    async def delete(self, id: int, db: DB, delete_key: str | None = "id") -> None:
         await commit(f"DELETE FROM {self._table} WHERE {delete_key} = $1", db, id)
 
 
-# TODO: implement this before messages.
-class ScyllaObject(BaseObject[T]):
-    _keyspace: str = ""
-
-
 class ObjectList(list[BaseObject]):
-    def representable(self) -> list[dict[str, Any]]:
-        return [obj.__dict__ for obj in self]
+    def representable(self) -> list[Any]:
+        return [obj.__object__ for obj in self]
 
 
-class Counter(ScyllaObject[T]):
-    async def incr(self, field: str, db: ScyllaDB, identifier_name: str) -> None:
-        await db.execute(
-            self._keyspace,
+class Counter(BaseObject):
+    async def incr(self, field: str, db: DB, identifier_name: str) -> None:
+        await commit(
             f"UPDATE {self._table} SET {field} + 1 WHERE {identifier_name} = $1",
-            (getattr(self, identifier_name)),
+            db,
+            getattr(self, identifier_name),
         )
 
-    async def decr(self, field: str, db: ScyllaDB, identifier_name: str) -> None:
-        await db.execute(
-            self._keyspace,
+    async def decr(self, field: str, db: DB, identifier_name: str) -> None:
+        await commit(
             f"UPDATE {self._table} SET {field} - 1 WHERE {identifier_name} = $1",
-            (getattr(self, identifier_name)),
+            db,
+            getattr(self, identifier_name),
         )
 
 
 @dataclass(kw_only=True)
-class User(BaseObject[UserData]):
+class User(NeedsDelete, BaseObject):
     _table = "users"
 
     id: int
@@ -167,7 +154,7 @@ class User(BaseObject[UserData]):
     password: Maybe[str] = MISSING
 
     def parse_obj(self) -> None:
-        self.flags = parse_to_flag(UserFlags, self.flags)
+        self.flags = UserFlags(self.flags)
         self.cold_save()
 
     def convert_obj(self, obj: UserData) -> UserData:
@@ -176,7 +163,7 @@ class User(BaseObject[UserData]):
 
 
 @dataclass(kw_only=True)
-class Settings(BaseObject[SettingsData]):
+class Settings(NeedsDelete, BaseObject):
     _table = "user_settings"
 
     user_id: int
@@ -184,8 +171,8 @@ class Settings(BaseObject[SettingsData]):
     status: Status
 
     def parse_obj(self) -> None:
-        self.theme = parse_to_flag(Theme, self.theme)
-        self.status = parse_to_flag(Status, self.status)
+        self.theme = Theme(self.theme)
+        self.status = Status(self.status)
         self.cold_save()
 
     def convert_obj(self, obj: SettingsData) -> SettingsData:
@@ -195,7 +182,7 @@ class Settings(BaseObject[SettingsData]):
 
 
 @dataclass(kw_only=True)
-class Guild(BaseObject[GuildData | GuildPreviewData]):
+class Guild(NeedsDelete, BaseObject):
     _table = "guilds"
 
     id: int
@@ -210,8 +197,8 @@ class Guild(BaseObject[GuildData | GuildPreviewData]):
 
     def parse_obj(self) -> None:
         if self.permissions:
-            self.permissions = parse_to_flag(Permissions, self.permissions)
-        self.features = [parse_to_flag(Features, v) for v in self.features]
+            self.permissions = Permissions(self.permissions)
+        self.features = [Features(v) for v in self.features]
         self.cold_save()
 
     def convert_obj(self, obj: GuildData) -> GuildData:
@@ -222,7 +209,7 @@ class Guild(BaseObject[GuildData | GuildPreviewData]):
 
 
 @dataclass(kw_only=True)
-class Member(BaseObject[MemberData]):
+class Member(BaseObject):
     _table = "guild_members"
 
     user_id: int
@@ -233,11 +220,14 @@ class Member(BaseObject[MemberData]):
     mute: bool
 
     def parse_obj(self) -> None:
+        if TYPE_CHECKING:
+            assert isinstance(self.joined_at, str)
         self.joined_at = datetime.fromisoformat(self.joined_at)
         self.cold_save()
 
     def convert_obj(self, obj: MemberData) -> MemberData:
-        obj["joined_at"] = self.joined_at.isoformat("minutes")
+        if isinstance(self.joined_at, datetime):
+            obj["joined_at"] = self.joined_at.isoformat("minutes")
         return obj
 
     async def delete(self, db: DB) -> None:
@@ -250,7 +240,7 @@ class Member(BaseObject[MemberData]):
 
 
 @dataclass(kw_only=True)
-class Device(BaseObject[DeviceData]):
+class Device(BaseObject):
     _table = "devices"
 
     id: int
@@ -258,7 +248,7 @@ class Device(BaseObject[DeviceData]):
 
 
 @dataclass(kw_only=True)
-class Role(BaseObject[RoleData]):
+class Role(NeedsDelete, BaseObject):
     _table = "roles"
 
     id: int
@@ -271,7 +261,7 @@ class Role(BaseObject[RoleData]):
 
 
 @dataclass(kw_only=True)
-class Channel(BaseObject[ChannelData]):
+class Channel(NeedsDelete, BaseObject):
     _table = "channels"
 
     id: int
@@ -284,7 +274,7 @@ class Channel(BaseObject[ChannelData]):
     parent_id: Maybe[int | None] = MISSING
 
     def parse_obj(self) -> None:
-        self.type = parse_to_flag(ChannelTypes, self.type)
+        self.type = ChannelTypes(self.type)
         self.cold_save()
 
     def convert_obj(self, obj: ChannelData) -> ChannelData:
@@ -292,31 +282,27 @@ class Channel(BaseObject[ChannelData]):
         return obj
 
 
-# ↓ ScyllaDB-related objects.
-
-
+# TODO: delete
 @dataclass(kw_only=True)
-class ChannelMention(ScyllaObject[ChannelMentionData]):
+class ChannelMention(BaseObject):
     _table = "message_channel_mentions"
-    _keyspace = "messages"
 
     message_id: int
     channel_id: int
 
 
+# TODO: delete
 @dataclass(kw_only=True)
-class UserMention(ScyllaObject[ChannelMentionData]):
+class UserMention(BaseObject):
     _table = "message_channel_mentions"
-    _keyspace = "messages"
 
     message_id: int
     user_id: int
 
 
 @dataclass(kw_only=True)
-class Message(ScyllaObject[MessageData]):
+class Message(BaseObject):
     _table = "messages"
-    _keyspace = "messages"
 
     id: int
     channel_id: int
@@ -332,14 +318,20 @@ class Message(ScyllaObject[MessageData]):
     flags: MessageFlags
 
     def parse_obj(self) -> None:
-        self.flags = parse_to_flag(MessageFlags, self.flags)
+        if TYPE_CHECKING:
+            assert isinstance(self.timestamp, str)
+            assert (
+                isinstance(self.edited_timestamp, str) or self.edited_timestamp is None
+            )
+
+        self.flags = MessageFlags(self.flags)
         self.timestamp = datetime.fromisoformat(self.timestamp)
         if self.edited_timestamp:
             self.edited_timestamp = datetime.fromisoformat(self.edited_timestamp)
         self.cold_save()
 
-    def convert_obj(self, obj: ChannelData) -> ChannelData:
-        obj["flags"] = int(self.flag)
+    def convert_obj(self, obj: MessageData) -> MessageData:
+        obj["flags"] = int(self.flags)
         obj["timestamp"] = self.timestamp.isoformat("minutes")
         if self.edited_timestamp:
             obj["edited_timestamp"] = self.edited_timestamp.isoformat("minutes")
@@ -347,9 +339,8 @@ class Message(ScyllaObject[MessageData]):
 
 
 @dataclass(kw_only=True)
-class ReadState(Counter[ReadStateData]):
+class ReadState(Counter):
     _table = "read_states"
-    _keyspace = "messages"
 
     user_id: int
     channel_id: int
@@ -358,9 +349,8 @@ class ReadState(Counter[ReadStateData]):
 
 
 @dataclass(kw_only=True)
-class MessageReactionCounter(Counter[MessageReactionCounterData]):
+class MessageReactionCounter(Counter):
     _table = "message_reaction_counters"
-    _keyspace = "messages"
 
     message_id: int
     emoji: str
@@ -368,9 +358,8 @@ class MessageReactionCounter(Counter[MessageReactionCounterData]):
 
 
 @dataclass(kw_only=True)
-class MessageReaction(ScyllaObject[MessageReactionData]):
+class MessageReaction(BaseObject):
     _table = "message_reactions"
-    _keyspace = "messages"
 
     message_id: int
     user_id: int
@@ -379,6 +368,9 @@ class MessageReaction(ScyllaObject[MessageReactionData]):
     emoji: str
 
     def parse_obj(self) -> None:
+        if TYPE_CHECKING:
+            assert isinstance(self.created_at, str)
+
         self.created_at = datetime.fromisoformat(self.created_at)
 
     def convert_obj(self, obj: MessageReactionData) -> MessageReactionData:

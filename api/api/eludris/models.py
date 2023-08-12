@@ -77,7 +77,7 @@ async def get_permset(hero, db: DB) -> Permissions:
         hero.member["roles"],
     )
 
-    ordered_perms = []
+    ordered_perms: list[tuple[int, int]] = []
 
     # higher = more power
     for role_perm in role_permissions:
@@ -119,9 +119,6 @@ class ChannelData(TypedDict):
     topic: NotRequired[str | None]
     last_message_id: NotRequired[int | None]
     parent_id: NotRequired[int | None]
-
-
-# ↓ ScyllaDB-related models.
 
 
 @final

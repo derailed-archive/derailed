@@ -1,6 +1,7 @@
 import os
 import threading
 import time
+from typing import TYPE_CHECKING
 
 __all__ = ("make_snowflake", "make_bucket", "make_buckets")
 
@@ -15,7 +16,12 @@ def make_snowflake() -> int:
 
     epoch = current_ms - DERAILED_EPOCH << 22
 
-    epoch |= (threading.current_thread().ident % 32) << 17
+    thread = threading.current_thread().ident
+
+    if TYPE_CHECKING:
+        assert thread
+
+    epoch |= (thread % 32) << 17
     epoch |= (os.getpid() % 32) << 12
 
     global INCR
@@ -27,7 +33,7 @@ def make_snowflake() -> int:
     return epoch
 
 
-def make_bucket(snowflake: int) -> int:
+def make_bucket(snowflake: int | None) -> int:
     if snowflake is None:
         timestamp = int(time.time() * 1000) - DERAILED_EPOCH
     else:
@@ -35,5 +41,5 @@ def make_bucket(snowflake: int) -> int:
     return int(timestamp / BUCKET_SIZE)
 
 
-def make_buckets(start_id: int, end_id: int = None) -> range:
+def make_buckets(start_id: int, end_id: int | None = None) -> range:
     return range(make_bucket(start_id), make_bucket(end_id) + 1)
