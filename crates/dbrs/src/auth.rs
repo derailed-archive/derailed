@@ -29,12 +29,12 @@ mod jwt_numeric_date {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 pub struct Token {
-    token_id: i64,
-    user_id: i64,
-    device_id: Option<String>,
+    pub token_id: i64,
+    pub user_id: i64,
+    pub device_id: Option<String>,
 
     #[serde(with = "jwt_numeric_date")]
-    created_at: OffsetDateTime,
+    pub created_at: OffsetDateTime,
     #[serde(with = "jwt_numeric_date")]
     exp: OffsetDateTime,
 }

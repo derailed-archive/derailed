@@ -6,6 +6,7 @@ class UserFlags(IntFlag):
     admin = 1 << 1
     verified = 1 << 2
     early_supporter = 1 << 3
+    email_verified = 1 << 4
 
 
 DEFAULT_USER_FLAGS = UserFlags(0)
@@ -67,9 +68,15 @@ for attr in dir(Permissions):
 
 
 class Features(StrEnum):
-    ...
+    CANARY_STAFF = "CANARY_STAFF"
 
 
 class Theme(StrEnum):
     DARK = "dark"
     LIGHT = "light"
+
+
+class OverwriteType(IntEnum):
+    MEMBER = 0
+    ROLE = 1
+    EVERYONE = 2

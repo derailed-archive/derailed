@@ -9,7 +9,7 @@ from ..auth import create_token
 from ..controllers.dbs import DB, use_db
 from ..controllers.rate_limiter import UnscopedRateLimiter
 from ..controllers.rpc import publish_user
-from ..eludris.flags import DEFAULT_USER_FLAGS
+from ..flags import DEFAULT_USER_FLAGS
 from ..eludris.models import User, UseUser
 from ..error import Err
 from ..identity import make_snowflake

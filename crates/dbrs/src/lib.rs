@@ -8,3 +8,4 @@ pub mod flags;
 pub use sqlx;
 pub use scylla;
 pub use time;
+pub use conn::{acquire, start_db, SCYLLA};

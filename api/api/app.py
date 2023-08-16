@@ -2,8 +2,6 @@ from typing import Any, Callable, Coroutine, TypedDict, final
 
 import dotenv
 
-from .eludris.objects import BaseObject, ObjectList
-
 dotenv.load_dotenv()
 
 import msgspec
@@ -11,7 +9,6 @@ from fastapi import Depends, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
 
-from .controllers.rate_limiter import UnscopedRateLimiter
 from .error import Err
 
 
@@ -19,10 +16,8 @@ class MSGSpecResponse(JSONResponse):
     media_type = "application/json"
 
     def render(self, content: Any) -> bytes:
-        if isinstance(content, BaseObject):
-            content = content.__object__
-        elif isinstance(content, ObjectList):
-            content = content.representable()
+        if isinstance(content, dict) and content.get('password') is not None:
+            del content['password']
 
         return msgspec.json.encode(content)
 
@@ -49,7 +44,7 @@ class MSGSpecRoute(APIRoute):
 
 app = FastAPI(
     default_response_class=MSGSpecResponse,
-    dependencies=[Depends(UnscopedRateLimiter("global", 80, 60, True))],
+    #dependencies=[Depends(UnscopedRateLimiter("global", 80, 60, True))],
 )
 app.router.route_class = MSGSpecRoute
 

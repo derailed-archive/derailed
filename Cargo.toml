@@ -1,3 +1,2 @@
 [workspace]
-members = ["crates/dbrs"]
-ignore = []
+members = ["crates/dbrs", "crates/data_service"]

@@ -1,0 +1,44 @@
+version: "3"
+
+services:
+  # TODO: replace with postgres, and remove silca
+  scylladb:
+    image: scylladb/scylla
+    container_name: scylladb
+    command: --memory 4G
+    volumes:
+      - ./scylla.yml:/etc/scylla/scylla.yml
+      - type: volume
+        source: data
+        target: /var/lib/scylla
+        volume:
+          nocopy: true
+    ports:
+      - "9042:9042"
+
+  api:
+    container_name: derailed-api
+    restart: unless-stopped
+    depends_on: ["scylladb", "silca"]
+    environment:
+      - SILCA_URL=silca:16000
+    ports:
+      - "14000:14000"
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+
+  silca:
+    container_name: silca
+    restart: unless-stopped
+    depends_on: ["scylladb"]
+    environment:
+     - DB_URLS=192.0.0.1
+    build:
+      context: ./silca
+      dockerfile: Dockerfile
+
+
+volumes:
+  data:
+

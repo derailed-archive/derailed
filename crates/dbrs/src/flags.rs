@@ -7,7 +7,7 @@ use bitflags::bitflags;
 
 bitflags! {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-    pub struct UserFlags: i64 {
+    pub struct UserFlags: u64 {
         const STAFF = 1 << 0;
         const ADMIN = 1 << 1;
         const VERIFIED = 1 << 2;
