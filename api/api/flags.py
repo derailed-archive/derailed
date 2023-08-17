@@ -29,11 +29,11 @@ class Status(IntEnum):
     DO_NOT_DISTURB = 3
 
 
-class MessageFlags(IntEnum):
+class MessageFlags(IntFlag):
     WELCOME_MESSAGE = 1 << 0
 
 
-class Permissions(IntEnum):
+class Permissions(IntFlag):
     # OWNER = -1
 
     ADMINISTRATOR = 1 << 0
@@ -58,13 +58,13 @@ class Permissions(IntEnum):
     CREATE_MESSAGES = 1 << 11
 
 
-ALL_PERMISSIONS = Permissions(1)
+ALL_PERMISSIONS = Permissions(0)
 
 
 for attr in dir(Permissions):
     val = getattr(Permissions, attr)
     if isinstance(val, Permissions):
-        setattr(ALL_PERMISSIONS, attr, True)
+        ALL_PERMISSIONS |= val
 
 
 class Features(StrEnum):

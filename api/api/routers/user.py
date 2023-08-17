@@ -1,3 +1,4 @@
+import re
 from typing import Annotated
 
 import asyncpg
@@ -9,29 +10,30 @@ from ..auth import create_token
 from ..controllers.dbs import DB, use_db
 from ..controllers.rate_limiter import UnscopedRateLimiter
 from ..controllers.rpc import publish_user
-from ..flags import DEFAULT_USER_FLAGS
-from ..eludris.models import User, UseUser
 from ..error import Err
-from ..identity import make_snowflake
+from ..flags import DEFAULT_USER_FLAGS
+from ..identity import make_ulid
+from ..models import User
+from ..models import get_user as gusr
 from ..utils import MISSING, Maybe, commit, create_update, f1, fetch
 
-users = APIRouter(dependencies=[Depends(UnscopedRateLimiter("guild", 20, 1))])
+users = APIRouter(dependencies=[Depends(UnscopedRateLimiter("user", 20, 1))])
+
+
+PASSWORD_REGEX = re.compile(r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,100}$")
+USERNAME_REGEX = re.compile(r"^[a-z0-9_.]{1,32}$")
 
 
 class CreateUser(BaseModel):
-    username: str = Field(regex=r"^[a-z0-9_.]+$", min_length=1, max_length=32)
+    username: str
     email: EmailStr
-    password: str = Field(regex=r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,100}$")
+    password: str
 
 
 class ModifyUser(BaseModel):
-    username: Maybe[str] = Field(
-        MISSING, regex=r"^[a-z0-9_.]+$", min_length=1, max_length=32
-    )
+    username: Maybe[str] = Field(MISSING)
     email: Maybe[EmailStr] = Field(MISSING)
-    password: Maybe[str] = Field(
-        MISSING, regex=r"^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,100}$"
-    )
+    password: Maybe[str] = Field(MISSING)
     display_name: Maybe[str | None] = Field(MISSING, min_length=1, max_length=32)
     current_password: str = Field(min_length=8, max_length=100)
 
@@ -40,12 +42,17 @@ class DeleteUser(BaseModel):
     password: str = Field(min_length=8, max_length=100)
 
 
-@users.post("/register", include_in_schema=False, status_code=201)
+@users.post("/register", status_code=201)
 async def register(model: CreateUser, db: Annotated[DB, Depends(use_db)]) -> User:
+    if not PASSWORD_REGEX.fullmatch(model.password):
+        raise Err('password must be stronger')
+    if not USERNAME_REGEX.fullmatch(model.username):
+        raise Err('username is invalid')
+
     trans = db.transaction()
     await trans.start()
 
-    user_id = make_snowflake()
+    user_id = make_ulid()
 
     try:
         await commit(
@@ -83,20 +90,14 @@ async def modify_current_user(
     db: Annotated[DB, Depends(use_db)],
     user: Annotated[
         User,
-        Depends(
-            UseUser(
-                "id",
-                "username",
-                "email",
-                "flags",
-                "display_name",
-                "bot",
-                "avatar",
-                "password",
-            )
-        ),
+        Depends(gusr),
     ],
 ) -> User:
+    if model.password and not PASSWORD_REGEX.fullmatch(model.password):
+        raise Err('password must be stronger')
+    if model.username and not USERNAME_REGEX.fullmatch(model.username):
+        raise Err('invalid username')
+
     changed_items = []
     item_values = []
 
@@ -144,19 +145,10 @@ async def modify_current_user(
 async def get_current_user(
     user: Annotated[
         User,
-        Depends(
-            UseUser(
-                "id",
-                "username",
-                "email",
-                "flags",
-                "display_name",
-                "bot",
-                "avatar",
-            )
-        ),
+        Depends(gusr),
     ]
 ) -> User:
+    user.pop('password')
     return user
 
 
@@ -164,12 +156,13 @@ async def get_current_user(
 async def get_user(
     user_id: int,
     db: Annotated[DB, Depends(use_db)],
-    _user: Annotated[User, Depends(UseUser("id"))],
+    _user: Annotated[User, Depends(gusr)],
 ) -> User:
     user = await f1(
         "SELECT (id, username, flags, display_name, bot, avatar) FROM users WHERE id = $1;",
         db,
         user_id,
+        t=User,
     )
 
     if user is None:
@@ -182,7 +175,7 @@ async def get_user(
 async def delete_current_user(
     model: DeleteUser,
     db: Annotated[DB, Depends(use_db)],
-    user: Annotated[User, Depends(UseUser("id", "password"))],
+    user: Annotated[User, Depends(gusr)],
 ) -> str:
     password_is_valid = bcrypt.checkpw(
         model.current_password.encode(), user["password"]
@@ -191,6 +184,15 @@ async def delete_current_user(
     if not password_is_valid:
         raise Err("incorrect password", 401)
 
-    await fetch("DELETE FROM users WHERE id = $1;", db, user["id"])
+    guilds = await fetch("SELECT id FROM guilds WHERE owner_id = $1", db, user["id"])
+
+    if guilds != []:
+        raise Err("owned guilds must be deleted first")
+
+    trans = db.transaction()
+    await trans.start()
+
+    await commit('DELETE FROM users WHERE id = $1', db, user['id'])
+    await commit('DELETE FROM member_assigned_roles WHERE user_id = $1', db, user['id'])
 
     return ""

@@ -2,10 +2,12 @@ import hashlib
 from typing import Annotated
 
 import redis.asyncio as redlib
-from fastapi import Depends, Path, Request, Response
+from fastapi import Depends, Header, Request, Response
+from fastapi._compat import Undefined
 
 from ..error import Err
-from .dbs import use_redis
+from ..models import get_user
+from .dbs import DB, use_db, use_redis
 
 
 class UnscopedRateLimiter:
@@ -22,11 +24,14 @@ class UnscopedRateLimiter:
 
     async def __call__(
         self,
-        user: Annotated[User | None, Depends(UseUser(["id"], optional=True))],
+        token_str: Annotated[str | None, Header(Undefined, alias="Authorization")],
+        db: Annotated[DB, Depends(use_db)],
         redis: Annotated[redlib.Redis, Depends(use_redis)],
     ) -> None:
-        if user is None:
+        if token_str is None:
             return
+        else:
+            user = await get_user(db, token_str)
 
         unserialized_bucket_id = f"{self.bucket}:{user['id']}"
         bucket_id = hashlib.md5(unserialized_bucket_id.encode()).hexdigest()
@@ -59,16 +64,20 @@ class ScopedRateLimiter:
 
     async def __call__(
         self,
-        channel_id: Annotated[int | None, Path(None)],
-        guild_id: Annotated[int | None, Path(None)],
         redis: Annotated[redlib.Redis, Depends(use_redis)],
-        user: Annotated[User | None, Depends(UseUser(["id"], optional=True))],
         request: Request,
         response: Response,
+        db: Annotated[DB, Depends(use_db)],
+        token_str: str | None = Header(Undefined, alias="Authorization"),
     ) -> None:
         # cannot be applied to non-users
-        if user is None:
+        if token_str is None:
             return
+        else:
+            user = await get_user(db, token_str)
+
+        channel_id = request.path_params.get('channel_id', None)
+        guild_id = request.path_params.get('guild_id', None)
 
         unserialized_bucket_id = (
             f"{user['id']}:{channel_id}:{guild_id}:{request.url.path}:{request.method}"

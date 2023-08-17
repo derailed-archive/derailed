@@ -1,16 +1,30 @@
+import random
 from typing import Annotated, Literal
 
+import bcrypt
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel, Field
 
 from ..controllers.dbs import DB, use_db
 from ..controllers.rate_limiter import ScopedRateLimiter, UnscopedRateLimiter
 from ..controllers.rpc import publish_guild, publish_user
-from ..flags import ChannelTypes, MessageFlags
 from ..error import Err
+from ..flags import ChannelTypes, MessageFlags
+from ..identity import make_ulid
+from ..models import Guild, Member, Message, User, get_member
+from ..models import get_guild as ggui
+from ..models import get_permissions
+from ..models import get_user as gusr
 from ..utils import MISSING, Maybe, commit, create_update, f1, now
 
 guilds = APIRouter(dependencies=[Depends(UnscopedRateLimiter("guild", 20, 1))])
+
+
+# TODO? move to a new file possibly.
+WELCOME_MESSAGES = [
+    "Welcome <@{user_id}>! Make sure to bake us some yummy pasta!",
+    "It's a bird, it's a plane! It's a wild <@{user_id}>",
+]
 
 
 class CreateGuild(BaseModel):
@@ -30,16 +44,24 @@ class DeleteGuild(BaseModel):
     password: str = Field(min_length=8, max_length=100)
 
 
+@guilds.get('/guilds/{guild_id}', depends=[Depends(ScopedRateLimiter())])
+async def get_guild(
+    guild: Annotated[Guild, ggui],
+    _member: Annotated[Member, get_member]
+) -> Guild:
+    return guild
+
+
 @guilds.post("/guilds", dependencies=[Depends(ScopedRateLimiter(2, 120))])
 async def create_guild(
     model: CreateGuild,
     db: Annotated[DB, Depends(use_db)],
-    user: Annotated[User, Depends(UseUser("id"))],
+    user: Annotated[User, Depends(gusr)],
 ) -> Guild:
     trans = db.transaction()
     await trans.start()
 
-    guild_id = make_snowflake()
+    guild_id = make_ulid()
 
     await commit(
         "INSERT INTO guilds (id, name, type) VALUES ($1, $2, $3);",
@@ -61,9 +83,9 @@ async def create_guild(
 
     # generate 3 ids for category, text channel, and welcome message
     category_id, channel_id, message_id = (
-        make_snowflake(),
-        make_snowflake(),
-        make_snowflake(),
+        make_ulid(),
+        make_ulid(),
+        make_ulid(),
     )
 
     create_channel = await db.prepare(
@@ -94,6 +116,7 @@ async def create_guild(
         ),
     )
     message_created = now().isoformat()
+    content = random.choice(WELCOME_MESSAGES)
 
     await commit(
         "INSERT INTO messages (id, channel_id, author_id, flags, content, timestamp) "
@@ -103,9 +126,21 @@ async def create_guild(
         channel_id,
         user["id"],
         int(MessageFlags.WELCOME_MESSAGE),
-        None,
+        content,
         message_created,
     )
+
+    if not user['bot']:
+        pos = await f1("SELECT max(position) + 1 FROM guild_slots WHERE user_id = $1 AND folder_id = $2;", db, user['id'], None)
+
+        await commit(
+            "INSERT INTO guild_slots (user_id, folder_id, position, guild_id) VALUES ($1, $2, $3, $4)",
+            db,
+            user['id'],
+            None,
+            pos,
+            guild_id
+        )
 
     await trans.commit()
 
@@ -158,13 +193,15 @@ async def create_guild(
         "flags": int(MessageFlags.WELCOME_MESSAGE),
         "channel_id": channel_id,
         "channel_mentions": [],
-        "content": None,
+        "content": content,
         "edited_timestamp": None,
         "mention_everyone": False,
         "pinned": False,
-        "reference_id": None,
+        "pinned_at": None,
+        "referenced_message_id": None,
         "role_mentions": [],
         "timestamp": message_created,
+        "channel_mentions": [],
         "user_mentions": [],
     }
 
@@ -174,36 +211,15 @@ async def create_guild(
     return guild
 
 
-@guilds.patch("/guilds/{guild_id}", dependencies=[ScopedRateLimiter()])
+@guilds.patch("/guilds/{guild_id}", dependencies=[Depends(ScopedRateLimiter())])
 async def modify_guild(
     model: ModifyGuild,
     db: Annotated[DB, Depends(use_db)],
-    hero: Annotated[
-        Hero,
-        Depends(
-            UseMember(
-                "roles",
-                guild_fields=[
-                    "id",
-                    "permissions",
-                    "features",
-                    "name",
-                    "icon",
-                    "max_members",
-                    "owner_id",
-                    "system_channel_id",
-                    "type",
-                ],
-            )
-        ),
-    ],
+    guild: Annotated[DB, Depends(ggui)],
+    permissions: Annotated[DB, Depends(get_permissions)],
 ) -> Guild:
-    permset = await get_permset(hero, db)
-
-    if not permset.MANAGE_GUILD:
+    if not permissions.MANAGE_GUILD:
         raise Err("invalid permissions", 403)
-
-    guild = hero.guild
 
     changed_fields = []
     field_values = []
@@ -245,22 +261,27 @@ async def modify_guild(
     return guild
 
 
-@guilds.delete("/guilds/{guild_id}", dependencies=[ScopedRateLimiter(5, 120)])
+@guilds.delete("/guilds/{guild_id}", dependencies=[Depends(ScopedRateLimiter(5, 120))])
 async def delete_guild(
     model: DeleteGuild,
     db: Annotated[DB, Depends(use_db)],
-    hero: Annotated[
-        Hero,
-        Depends(
-            UseMember(
-                "roles",
-                guild_fields=[
-                    "id",
-                    "owner_id",
-                ],
-            )
-        ),
-    ],
+    user: Annotated[User, Depends(gusr)],
+    guild: Annotated[Guild, Depends(ggui)],
 ) -> Guild:
-    if hero.user["id"] != hero.guild["owner_id"]:
-        raise Err
+    if user["id"] != guild["owner_id"]:
+        raise Err("you must be owner to delete a guild", 403)
+
+    valid_pswd = bcrypt.checkpw(model.password.encode(), user["password"].encode())
+
+    if not valid_pswd:
+        raise Err("incorrect password", 403)
+
+    trans = db.transaction()
+    await trans.start()
+
+    # these don't have foreign keys directly.
+    await commit("DELETE FROM guilds WHERE id = $1", db, guild["id"])
+
+    await trans.commit()
+
+    return ""

@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from typing import Annotated, Literal, NotRequired, TypedDict, final
+from typing import Annotated, Literal, NotRequired, final
+from typing_extensions import TypedDict
+
 
 from fastapi import Depends, Header, Path
 
-from .error import Err
-
 from .auth import verify_token
-
 from .controllers.dbs import DB, use_db
-from .utils import f1, fetch
+from .error import Err
 from .flags import ALL_PERMISSIONS, Permissions
+from .utils import f1, fetch
 
 
 @final
@@ -46,7 +46,7 @@ class GuildFolder(TypedDict):
 class GuildSlot(TypedDict):
     folder_id: str
     guild_id: str
-    user_id: str
+    position: int
 
 
 class Guild(TypedDict):
@@ -91,36 +91,62 @@ class Device(TypedDict):
 
 async def get_user(
     db: Annotated[DB, Depends(use_db)],
-    str_token: Annotated[str, Header(alias='Authorization')]
+    str_token: Annotated[str, Header(alias="Authorization")],
 ) -> User:
     token = verify_token(str_token)
 
-    device = await f1('SELECT * FROM devices WHERE id = $1;', db, token['device_id'], t=Device)
+    device = await f1(
+        "SELECT * FROM devices WHERE id = $1;", db, token["device_id"], t=Device
+    )
 
     if device:
-        return await f1('SELECT * FROM users WHERE id = $1;', db, device['user_id'], t=User)
+        return await f1(
+            "SELECT * FROM users WHERE id = $1;", db, device["user_id"], t=User
+        )
 
-    raise Err('invalid device for authorization token', 401)
+    raise Err("invalid device for authorization token", 401)
 
 
 async def get_guild(
-    db: Annotated[DB, Depends(use_db)],
-    guild_id: Annotated[str, Path()]
+    db: Annotated[DB, Depends(use_db)], guild_id: Annotated[str, Path()]
 ) -> Guild:
-    guild = await f1('SELECT * FROM guilds WHERE id = $1;', db, guild_id, t=Guild)
+    guild = await f1("SELECT * FROM guilds WHERE id = $1;", db, guild_id, t=Guild)
 
-    if guild:
-        return
+    if guild is None:
+        raise Err("guild not found", 404)
 
-    raise Err('guild not found', 404)
+    guild['features'] = await fetch('SELECT feature FROM guild_features WHERE guild_id = $1', db, guild_id)
+
+    return guild
+
+
+async def get_member(
+    db: Annotated[DB, Depends(use_db)],
+    guild: Annotated[Guild, Depends(get_guild)],
+    user: Annotated[User, Depends(get_user)],
+) -> Member:
+    member = await f1(
+        "SELECT * FROM guild_members WHERE guild_id = $1 AND user_id = $2",
+        db,
+        guild["id"],
+        user["id"],
+        t=Member
+    )
+
+    if member is None:
+        raise Err("you are not a member of this guild", 403)
+
+    member['roles'] = await fetch('SELECT role_id FROM member_assigned_roles WHERE user_id = $1 AND guild_id = $2;', db, member['user_id'], member['guild_id'], t=str)
+
+    return member
 
 
 async def get_permissions(
     db: Annotated[DB, Depends(use_db)],
-    user: Annotated[User, Depends(get_user)],
-    guild: Annotated[Guild, Depends(get_guild)]
+    member: Annotated[Member, Depends(get_member)],
+    guild: Annotated[Guild, Depends(get_guild)],
 ) -> Permissions:
-    if guild["owner_id"] == user["id"]:
+    if guild["owner_id"] == member["user_id"]:
         return ALL_PERMISSIONS
 
     base = guild["permissions"]
@@ -129,9 +155,9 @@ async def get_permissions(
     role_permissions = await fetch(
         "SELECT (allow, deny, position) FROM roles WHERE id IN (SELECT role_id FROM member_assigned_roles WHERE user_id = $1 AND guild_id = $2);",
         db,
-        user['id'],
-        guild['id'],
-        t=Role
+        member["user_id"],
+        guild["id"],
+        t=Role,
     )
 
     ordered_perms: list[tuple[int, int]] = []
@@ -166,6 +192,14 @@ class Role(TypedDict):
     mentionable: bool
 
 
+class Overwrite(TypedDict):
+    id: str
+    channel_id: str
+    type: int
+    allow: int
+    deny: int
+
+
 @final
 class Channel(TypedDict):
     id: str
@@ -176,6 +210,29 @@ class Channel(TypedDict):
     topic: NotRequired[str | None]
     last_message_id: NotRequired[int | None]
     parent_id: NotRequired[int | None]
+    sync_parent_permissions: NotRequired[bool]
+
+    permission_overwrites: NotRequired[Overwrite]
+
+
+async def get_channel(
+    db: Annotated[DB, Depends(use_db)], channel_id: Annotated[str, Path()]
+) -> Channel:
+    channel = await f1(
+        "SELECT * FROM channels WHERE id = $1", db, channel_id, t=Channel
+    )
+
+    if channel is None:
+        raise Err("channel not found", 404)
+
+    channel["permission_overwrites"] = await fetch(
+        "SELECT (id, type, allow, deny) FROM permission_overwrites WHERE channel_id = $1;",
+        db,
+        channel_id,
+        t=Overwrite,
+    )
+
+    return channel
 
 
 @final
@@ -205,8 +262,79 @@ class Message(TypedDict):
     flags: int
 
     # mentions
-    channel_mentions: NotRequired[list[ChannelMention]]
-    user_mentions: NotRequired[list[UserMention]]
+    channel_mentions: NotRequired[list[str]]
+    user_mentions: NotRequired[list[str]]
+    role_mentions: NotRequired[list[str]]
+
+
+async def get_message(
+    db: Annotated[DB, Depends(use_db)], message_id: Annotated[str, Path()]
+) -> Message:
+    message = await f1(
+        "SELECT * FROM messages WHERE id = $1;", db, message_id, t=Message
+    )
+
+    if message is None:
+        raise Err("message not found", 404)
+
+    message["channel_mentions"] = await fetch(
+        "SELECT channel_id FROM message_channel_mentions WHERE message_id = $1;",
+        db,
+        message_id,
+        t=ChannelMention,
+    )
+    message["user_mentions"] = await fetch(
+        "SELECT user_id FROM message_user_mentions WHERE message_id = $1;",
+        db,
+        message_id,
+        t=UserMention,
+    )
+    message["role_mentions"] = await fetch(
+        "SELECT role_id FROM message_role_mentions WHERE message_id = $1;",
+        db,
+        message_id,
+        t=UserMention,
+    )
+
+    return message
+
+
+async def get_messages(db: DB, channel_id: str, limit: int = 25) -> list[Message]:
+    messages = await f1(
+        f"SELECT * FROM messages WHERE channel_id = $1 LIMIT {limit};",
+        db,
+        channel_id,
+        t=Channel,
+    )
+
+    message_ids = [message["id"] for message in messages]
+
+    channel_mentions = await fetch(
+        "SELECT * FROM message_channel_mentions WHERE message_id IN $1;",
+        db,
+        message_ids,
+        t=ChannelMention,
+    )
+    user_mentions = await fetch(
+        "SELECT * FROM message_user_mentions WHERE message_id IN $1;", db, message_ids
+    )
+
+    added_content = {
+        message_id: {"channel_mentions": [], "user_mentions": []}
+        for message_id in message_ids
+    }
+
+    for cm in channel_mentions:
+        added_content[cm["message_id"]]["channel_mentions"].append(cm["channel_id"])
+
+    for um in user_mentions:
+        added_content[um["message_id"]]["user_mentions"].append(um["user_id"])
+
+    for message in messages:
+        message["user_mentions"] = added_content[message["id"]]["user_mentions"]
+        message["channel_mentions"] = added_content[message["id"]]["channel_mentions"]
+
+    return messages
 
 
 @final
@@ -216,12 +344,23 @@ class ReadState(TypedDict):
     last_message_id: str
 
 
-@final
-class MessageReactionCounter(TypedDict):
-    message_id: str
-    count: int
-    emoji: str
+async def get_channel_read_state(
+    channel: Annotated[Channel, Depends(get_channel)],
+    user: Annotated[User, Depends(get_user)],
+    db: Annotated[DB, Depends(use_db)],
+) -> ReadState:
+    read_state = await f1(
+        "SELECT (mentions, last_message_id) FROM read_states WHERE user_id = $1 AND channel_id = $2;",
+        db,
+        user["id"],
+        channel["id"],
+        t=ReadState,
+    )
 
+    if read_state is None:
+        raise Err("Read State for channel does not exist", 404)
+
+    return read_state
 
 @final
 class MessageReaction(TypedDict):
