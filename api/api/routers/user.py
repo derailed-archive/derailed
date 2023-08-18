@@ -171,14 +171,14 @@ async def get_user(
     return user
 
 
-@users.delete("/users/@me")
+@users.post("/users/@me/delete", status_code=204)
 async def delete_current_user(
     model: DeleteUser,
     db: Annotated[DB, Depends(use_db)],
     user: Annotated[User, Depends(gusr)],
 ) -> str:
     password_is_valid = bcrypt.checkpw(
-        model.current_password.encode(), user["password"]
+        model.password.encode(), user["password"]
     )
 
     if not password_is_valid:

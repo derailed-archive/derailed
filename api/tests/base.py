@@ -6,7 +6,7 @@ from httpx import AsyncClient
 
 @pytest.fixture(scope="function")
 def client() -> FastAPI:
-    return AsyncClient(app)
+    return AsyncClient(app=app, base_url="http://test")
 
 
 @pytest.fixture

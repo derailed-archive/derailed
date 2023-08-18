@@ -52,7 +52,7 @@ async def get_guild(
     return guild
 
 
-@guilds.post("/guilds", dependencies=[Depends(ScopedRateLimiter(2, 120))])
+@guilds.post("/guilds", dependencies=[Depends(ScopedRateLimiter(2, 120))], status_code=201)
 async def create_guild(
     model: CreateGuild,
     db: Annotated[DB, Depends(use_db)],

@@ -1,9 +1,12 @@
 import os
+import sys
 
 import asyncpg
+import dotenv
 import redis.asyncio as redis
 from asyncpg.pool import PoolConnectionProxy
 
+dotenv.load_dotenv()
 
 class DatabaseController:
     def __init__(self) -> None:
