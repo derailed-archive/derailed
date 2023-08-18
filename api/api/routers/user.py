@@ -45,9 +45,9 @@ class DeleteUser(BaseModel):
 @users.post("/register", status_code=201)
 async def register(model: CreateUser, db: Annotated[DB, Depends(use_db)]) -> User:
     if not PASSWORD_REGEX.fullmatch(model.password):
-        raise Err('password must be stronger')
+        raise Err("password must be stronger")
     if not USERNAME_REGEX.fullmatch(model.username):
-        raise Err('username is invalid')
+        raise Err("username is invalid")
 
     trans = db.transaction()
     await trans.start()
@@ -94,9 +94,9 @@ async def modify_current_user(
     ],
 ) -> User:
     if model.password and not PASSWORD_REGEX.fullmatch(model.password):
-        raise Err('password must be stronger')
+        raise Err("password must be stronger")
     if model.username and not USERNAME_REGEX.fullmatch(model.username):
-        raise Err('invalid username')
+        raise Err("invalid username")
 
     changed_items = []
     item_values = []
@@ -148,7 +148,7 @@ async def get_current_user(
         Depends(gusr),
     ]
 ) -> User:
-    user.pop('password')
+    user.pop("password")
     return user
 
 
@@ -177,9 +177,7 @@ async def delete_current_user(
     db: Annotated[DB, Depends(use_db)],
     user: Annotated[User, Depends(gusr)],
 ) -> str:
-    password_is_valid = bcrypt.checkpw(
-        model.password.encode(), user["password"]
-    )
+    password_is_valid = bcrypt.checkpw(model.password.encode(), user["password"])
 
     if not password_is_valid:
         raise Err("incorrect password", 401)
@@ -192,7 +190,7 @@ async def delete_current_user(
     trans = db.transaction()
     await trans.start()
 
-    await commit('DELETE FROM users WHERE id = $1', db, user['id'])
-    await commit('DELETE FROM member_assigned_roles WHERE user_id = $1', db, user['id'])
+    await commit("DELETE FROM users WHERE id = $1", db, user["id"])
+    await commit("DELETE FROM member_assigned_roles WHERE user_id = $1", db, user["id"])
 
     return ""

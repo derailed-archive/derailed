@@ -1,7 +1,8 @@
-from fastapi import FastAPI
 import pytest
-from api.app import app
+from fastapi import FastAPI
 from httpx import AsyncClient
+
+from api.app import app
 
 
 @pytest.fixture(scope="function")
@@ -11,4 +12,4 @@ def client() -> FastAPI:
 
 @pytest.fixture
 def anyio_backend():
-    return 'asyncio'
+    return "asyncio"

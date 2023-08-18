@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 from typing import Annotated, Literal, NotRequired, final
-from typing_extensions import TypedDict
-
 
 from fastapi import Depends, Header, Path
+from typing_extensions import TypedDict
 
 from .auth import verify_token
 from .controllers.dbs import DB, use_db
@@ -115,7 +114,9 @@ async def get_guild(
     if guild is None:
         raise Err("guild not found", 404)
 
-    guild['features'] = await fetch('SELECT feature FROM guild_features WHERE guild_id = $1', db, guild_id)
+    guild["features"] = await fetch(
+        "SELECT feature FROM guild_features WHERE guild_id = $1", db, guild_id
+    )
 
     return guild
 
@@ -130,13 +131,19 @@ async def get_member(
         db,
         guild["id"],
         user["id"],
-        t=Member
+        t=Member,
     )
 
     if member is None:
         raise Err("you are not a member of this guild", 403)
 
-    member['roles'] = await fetch('SELECT role_id FROM member_assigned_roles WHERE user_id = $1 AND guild_id = $2;', db, member['user_id'], member['guild_id'], t=str)
+    member["roles"] = await fetch(
+        "SELECT role_id FROM member_assigned_roles WHERE user_id = $1 AND guild_id = $2;",
+        db,
+        member["user_id"],
+        member["guild_id"],
+        t=str,
+    )
 
     return member
 
@@ -361,6 +368,7 @@ async def get_channel_read_state(
         raise Err("Read State for channel does not exist", 404)
 
     return read_state
+
 
 @final
 class MessageReaction(TypedDict):

@@ -17,7 +17,9 @@ class Token(TypedDict):
 
 def verify_token(token: str) -> Token:
     try:
-        ret_token: dict[str, Any] = jwt.decode(token, os.environ['TOKEN_SECRET'], ["HS256"])
+        ret_token: dict[str, Any] = jwt.decode(
+            token, os.environ["TOKEN_SECRET"], ["HS256"]
+        )
     except jwt.DecodeError:
         raise Err("token invalid", 401)
 
@@ -31,5 +33,5 @@ def create_token(user_id: int) -> str:
             "token_id": make_snowflake(),
             "created_at": now().isoformat(),
         },
-        os.environ['TOKEN_SECRET'],
+        os.environ["TOKEN_SECRET"],
     )

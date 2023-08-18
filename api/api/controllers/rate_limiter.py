@@ -76,8 +76,8 @@ class ScopedRateLimiter:
         else:
             user = await get_user(db, token_str)
 
-        channel_id = request.path_params.get('channel_id', None)
-        guild_id = request.path_params.get('guild_id', None)
+        channel_id = request.path_params.get("channel_id", None)
+        guild_id = request.path_params.get("guild_id", None)
 
         unserialized_bucket_id = (
             f"{user['id']}:{channel_id}:{guild_id}:{request.url.path}:{request.method}"

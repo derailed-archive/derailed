@@ -6,9 +6,8 @@ Create Date: 2023-08-17 17:51:15.161592
 """
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
-
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "c8ce70d60afe"
@@ -31,7 +30,12 @@ def upgrade() -> None:
     )
     op.create_table(
         "settings",
-        sa.Column("user_id", sa.Text(), sa.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+        sa.Column(
+            "user_id",
+            sa.Text(),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            primary_key=True,
+        ),
         sa.Column("theme", sa.Text(), default="dark"),
         sa.Column("status", sa.Integer(), default=1),
     )
@@ -48,14 +52,24 @@ def upgrade() -> None:
     )
     op.create_table(
         "guild_features",
-        sa.Column("guild_id", sa.Text(), sa.ForeignKey('guilds.id', ondelete="CASCADE"), primary_key=True),
+        sa.Column(
+            "guild_id",
+            sa.Text(),
+            sa.ForeignKey("guilds.id", ondelete="CASCADE"),
+            primary_key=True,
+        ),
         sa.Column("feature", sa.Text(), primary_key=True),
     )
 
     op.create_table(
         "guild_members",
         sa.Column("user_id", sa.Text(), primary_key=True),
-        sa.Column("guild_id", sa.Text(), sa.ForeignKey("guilds.id", ondelete="CASCADE"), primary_key=True),
+        sa.Column(
+            "guild_id",
+            sa.Text(),
+            sa.ForeignKey("guilds.id", ondelete="CASCADE"),
+            primary_key=True,
+        ),
         sa.Column("nick", sa.Text()),
         sa.Column("joined_at", sa.TIMESTAMP),
         sa.Column("deaf", sa.Boolean()),
@@ -64,18 +78,33 @@ def upgrade() -> None:
     op.create_table(
         "member_assigned_roles",
         sa.Column("user_id", sa.Text(), primary_key=True),
-        sa.Column("guild_id", sa.Text(), sa.ForeignKey("guilds.id", ondelete="CASCADE"), primary_key=True),
+        sa.Column(
+            "guild_id",
+            sa.Text(),
+            sa.ForeignKey("guilds.id", ondelete="CASCADE"),
+            primary_key=True,
+        ),
         sa.Column("role_id", sa.Text(), primary_key=True),
     )
     op.create_table(
         "devices",
         sa.Column("id", sa.Text(), primary_key=True),
-        sa.Column("user_id", sa.Text(), sa.ForeignKey("users.id", ondelete="CASCADE"), index=True),
+        sa.Column(
+            "user_id",
+            sa.Text(),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            index=True,
+        ),
     )
     op.create_table(
         "roles",
         sa.Column("id", sa.Text(), primary_key=True),
-        sa.Column("guild_id", sa.Text(), sa.ForeignKey("guilds.id", ondelete="CASCADE"), index=True),
+        sa.Column(
+            "guild_id",
+            sa.Text(),
+            sa.ForeignKey("guilds.id", ondelete="CASCADE"),
+            index=True,
+        ),
         sa.Column("name", sa.Text()),
         sa.Column("allow", sa.BigInteger()),
         sa.Column("deny", sa.BigInteger()),
@@ -96,9 +125,17 @@ def upgrade() -> None:
             sa.ForeignKey("guilds.id", ondelete="CASCADE"),
             primary_key=True,
         ),
-        sa.Column("user_id", sa.Text(), sa.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
         sa.Column(
-            "folder_id", sa.Text(), sa.ForeignKey("guild_folders.id", ondelete="SET NULL"), nullable=True
+            "user_id",
+            sa.Text(),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            primary_key=True,
+        ),
+        sa.Column(
+            "folder_id",
+            sa.Text(),
+            sa.ForeignKey("guild_folders.id", ondelete="SET NULL"),
+            nullable=True,
         ),
         sa.Column("position", sa.Integer()),
     )
@@ -181,7 +218,12 @@ def upgrade() -> None:
     )
     op.create_table(
         "read_states",
-        sa.Column("user_id", sa.Text(), sa.ForeignKey("users.id", ondelete="CASCADE"), primary_key=True),
+        sa.Column(
+            "user_id",
+            sa.Text(),
+            sa.ForeignKey("users.id", ondelete="CASCADE"),
+            primary_key=True,
+        ),
         sa.Column(
             "channel_id",
             sa.Text(),

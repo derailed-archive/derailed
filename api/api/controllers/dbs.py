@@ -1,12 +1,9 @@
 import os
-import sys
 
 import asyncpg
-import dotenv
 import redis.asyncio as redis
 from asyncpg.pool import PoolConnectionProxy
 
-dotenv.load_dotenv()
 
 class DatabaseController:
     def __init__(self) -> None:
@@ -20,7 +17,7 @@ controller = DatabaseController()
 DB = PoolConnectionProxy
 
 
-async def use_db() -> DB: # type: ignore
+async def use_db() -> DB:  # type: ignore
     return await controller.pool.acquire()
 
 

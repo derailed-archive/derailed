@@ -11,9 +11,9 @@ from ..controllers.rpc import publish_guild, publish_user
 from ..error import Err
 from ..flags import ChannelTypes, MessageFlags
 from ..identity import make_ulid
-from ..models import Guild, Member, Message, User, get_member
+from ..models import Guild, Member, Message, User
 from ..models import get_guild as ggui
-from ..models import get_permissions
+from ..models import get_member, get_permissions
 from ..models import get_user as gusr
 from ..utils import MISSING, Maybe, commit, create_update, f1, now
 
@@ -44,15 +44,16 @@ class DeleteGuild(BaseModel):
     password: str = Field(min_length=8, max_length=100)
 
 
-@guilds.get('/guilds/{guild_id}', depends=[Depends(ScopedRateLimiter())])
+@guilds.get("/guilds/{guild_id}", depends=[Depends(ScopedRateLimiter())])
 async def get_guild(
-    guild: Annotated[Guild, ggui],
-    _member: Annotated[Member, get_member]
+    guild: Annotated[Guild, ggui], _member: Annotated[Member, get_member]
 ) -> Guild:
     return guild
 
 
-@guilds.post("/guilds", dependencies=[Depends(ScopedRateLimiter(2, 120))], status_code=201)
+@guilds.post(
+    "/guilds", dependencies=[Depends(ScopedRateLimiter(2, 120))], status_code=201
+)
 async def create_guild(
     model: CreateGuild,
     db: Annotated[DB, Depends(use_db)],
@@ -130,16 +131,21 @@ async def create_guild(
         message_created,
     )
 
-    if not user['bot']:
-        pos = await f1("SELECT max(position) + 1 FROM guild_slots WHERE user_id = $1 AND folder_id = $2;", db, user['id'], None)
+    if not user["bot"]:
+        pos = await f1(
+            "SELECT max(position) + 1 FROM guild_slots WHERE user_id = $1 AND folder_id = $2;",
+            db,
+            user["id"],
+            None,
+        )
 
         await commit(
             "INSERT INTO guild_slots (user_id, folder_id, position, guild_id) VALUES ($1, $2, $3, $4)",
             db,
-            user['id'],
+            user["id"],
             None,
             pos,
-            guild_id
+            guild_id,
         )
 
     await trans.commit()

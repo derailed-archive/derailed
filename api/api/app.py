@@ -8,11 +8,11 @@ import msgspec
 from fastapi import Depends, FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.routing import APIRoute
-from .routers.user import users
-from .routers.guild import guilds
-from .controllers.rate_limiter import UnscopedRateLimiter
 
+from .controllers.rate_limiter import UnscopedRateLimiter
 from .error import Err
+from .routers.guild import guilds
+from .routers.user import users
 
 
 class MSGSpecResponse(JSONResponse):
