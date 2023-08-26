@@ -19,9 +19,6 @@ class MSGSpecResponse(JSONResponse):
     media_type = "application/json"
 
     def render(self, content: Any) -> bytes:
-        if isinstance(content, dict) and content.get("password") is not None:
-            del content["password"]
-
         return msgspec.json.encode(content)
 
 

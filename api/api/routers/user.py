@@ -12,7 +12,7 @@ from ..controllers.rate_limiter import UnscopedRateLimiter
 from ..controllers.rpc import publish_user
 from ..error import Err
 from ..flags import DEFAULT_USER_FLAGS
-from ..identity import make_ulid
+from ..identity import make_snowflake
 from ..models import User
 from ..models import get_user as gusr
 from ..utils import MISSING, Maybe, commit, create_update, f1, fetch
@@ -42,6 +42,11 @@ class DeleteUser(BaseModel):
     password: str = Field(min_length=8, max_length=100)
 
 
+class Login(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=100)
+
+
 @users.post("/register", status_code=201)
 async def register(model: CreateUser, db: Annotated[DB, Depends(use_db)]) -> User:
     if not PASSWORD_REGEX.fullmatch(model.password):
@@ -49,39 +54,58 @@ async def register(model: CreateUser, db: Annotated[DB, Depends(use_db)]) -> Use
     if not USERNAME_REGEX.fullmatch(model.username):
         raise Err("username is invalid")
 
-    trans = db.transaction()
-    await trans.start()
+    async with db.transaction():
+        user_id = make_snowflake()
 
-    user_id = make_ulid()
+        try:
+            await commit(
+                "INSERT INTO users (id, username, email, password, flags, bot)"
+                "VALUES ($1, $2, $3, $4, $5);",
+                db,
+                user_id,
+                model.username,
+                model.email,
+                bcrypt.hashpw(model.password.encode(), bcrypt.gensalt(14)).decode(),
+                int(DEFAULT_USER_FLAGS),
+                False
+            )
+        except asyncpg.UniqueViolationError:
+            raise Err("username or email already taken")
 
-    try:
-        await commit(
-            "INSERT INTO users (id, username, email, password, flags)"
-            "VALUES ($1, $2, $3, $4, $5);",
-            db,
-            user_id,
-            model.username,
-            model.email,
-            bcrypt.hashpw(model.password.encode(), bcrypt.gensalt(14)),
-            int(DEFAULT_USER_FLAGS),
-        )
-    except asyncpg.UniqueViolationError:
-        raise Err("username or email already taken")
+        await commit("INSERT INTO settings (user_id) VALUES ($1);", db, user_id)
+        device_id = make_snowflake()
+        await commit("INSERT INTO devices (id, user_id) VALUES ($1, $2);", db, device_id, user_id)
 
-    await commit("INSERT INTO settings (user_id) VALUES ($1);", db, user_id)
+        return {
+            "id": user_id,
+            "username": model.username,
+            "email": model.email,
+            "flags": int(DEFAULT_USER_FLAGS),
+            "display_name": None,
+            "bot": False,
+            "avatar": None,
+            "_token": create_token(user_id),
+        }
 
-    await trans.commit()
 
-    return {
-        "id": user_id,
-        "username": model.username,
-        "email": model.email,
-        "flags": int(DEFAULT_USER_FLAGS),
-        "display_name": None,
-        "bot": False,
-        "avatar": None,
-        "_token": create_token(user_id),
-    }
+@users.post('/login', status_code=201)
+async def login(model: Login, db: Annotated[DB, Depends(use_db)]) -> User:
+    user = await f1('SELECT * FROM users WHERE email = $1;', db, model.email, t=User)
+
+    if user is None:
+        raise Err('email is not in use')
+
+    if not bcrypt.checkpw(model.password.encode(), user['password'].encode()):
+        raise Err('Invalid password', 401)
+
+    user.pop('password')
+
+    device_id = make_snowflake()
+    await commit("INSERT INTO devices (id, user_id) VALUES ($1, $2);", db, device_id, user['id'])
+
+    user['_token'] = create_token(user['id'], device_id)
+    print(user)
+    return user
 
 
 @users.patch("/users/@me")
@@ -122,7 +146,7 @@ async def modify_current_user(
 
     if model.password:
         changed_items.append("password")
-        item_values.append(bcrypt.hashpw(model.password.encode(), bcrypt.gensalt(14)))
+        item_values.append(bcrypt.hashpw(model.password.encode(), bcrypt.gensalt(14)).decode())
 
     if model.display_name:
         changed_items.append("display_name")
@@ -156,7 +180,7 @@ async def get_current_user(
 async def get_user(
     user_id: int,
     db: Annotated[DB, Depends(use_db)],
-    _user: Annotated[User, Depends(gusr)],
+    user: Annotated[User, Depends(gusr)],
 ) -> User:
     user = await f1(
         "SELECT (id, username, flags, display_name, bot, avatar) FROM users WHERE id = $1;",
@@ -176,7 +200,7 @@ async def delete_current_user(
     model: DeleteUser,
     db: Annotated[DB, Depends(use_db)],
     user: Annotated[User, Depends(gusr)],
-) -> str:
+):
     password_is_valid = bcrypt.checkpw(model.password.encode(), user["password"])
 
     if not password_is_valid:
@@ -187,10 +211,6 @@ async def delete_current_user(
     if guilds != []:
         raise Err("owned guilds must be deleted first")
 
-    trans = db.transaction()
-    await trans.start()
-
-    await commit("DELETE FROM users WHERE id = $1", db, user["id"])
-    await commit("DELETE FROM member_assigned_roles WHERE user_id = $1", db, user["id"])
-
-    return ""
+    async with db.transaction():
+        await commit("DELETE FROM users WHERE id = $1", db, user["id"])
+        await commit("DELETE FROM member_assigned_roles WHERE user_id = $1", db, user["id"])

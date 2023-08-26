@@ -26,12 +26,13 @@ def verify_token(token: str) -> Token:
     return cast(Token, ret_token)
 
 
-def create_token(user_id: int) -> str:
+def create_token(user_id: int, device_id: int) -> str:
     return jwt.encode(
         {
             "user_id": user_id,
             "token_id": make_snowflake(),
             "created_at": now().isoformat(),
+            "device_id": device_id
         },
         os.environ["TOKEN_SECRET"],
     )

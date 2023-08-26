@@ -10,7 +10,7 @@ if __name__ == "__main__":
     uvicorn.run(
         "api.app:app",
         host="0.0.0.0",
-        port=5000,
+        port=14000,
         reload=True,
         log_level=logging.DEBUG,
         use_colors=True,

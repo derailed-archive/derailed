@@ -14,7 +14,7 @@ from .utils import f1, fetch
 
 @final
 class User(TypedDict):
-    id: str
+    id: int
     username: str
     display_name: NotRequired[str | None]
     avatar: NotRequired[str | None]
@@ -33,7 +33,7 @@ class Settings(TypedDict):
 
 @final
 class GuildFolder(TypedDict):
-    id: str
+    id: int
     name: str | None
     user_id: str
 
@@ -43,13 +43,13 @@ class GuildFolder(TypedDict):
 
 @final
 class GuildSlot(TypedDict):
-    folder_id: str
-    guild_id: str
+    folder_id: int
+    guild_id: int
     position: int
 
 
 class Guild(TypedDict):
-    id: str
+    id: int
     name: str
     icon: NotRequired[str | None]
     owner_id: NotRequired[int]
@@ -73,8 +73,8 @@ class GuildPreview(Guild):
 
 @final
 class Member(TypedDict):
-    user_id: str
-    guild_id: str
+    user_id: int
+    guild_id: int
     nick: str | None
     joined_at: str
     deaf: bool
@@ -84,8 +84,8 @@ class Member(TypedDict):
 
 @final
 class Device(TypedDict):
-    id: str
-    user_id: str
+    id: int
+    user_id: int
 
 
 async def get_user(
@@ -107,7 +107,7 @@ async def get_user(
 
 
 async def get_guild(
-    db: Annotated[DB, Depends(use_db)], guild_id: Annotated[str, Path()]
+    db: Annotated[DB, Depends(use_db)], guild_id: Annotated[int, Path()]
 ) -> Guild:
     guild = await f1("SELECT * FROM guilds WHERE id = $1;", db, guild_id, t=Guild)
 
@@ -190,8 +190,8 @@ async def get_permissions(
 
 @final
 class Role(TypedDict):
-    id: str
-    guild_id: str
+    id: int
+    guild_id: int
     name: str
     allow: int
     deny: int
@@ -200,8 +200,8 @@ class Role(TypedDict):
 
 
 class Overwrite(TypedDict):
-    id: str
-    channel_id: str
+    id: int
+    channel_id: int
     type: int
     allow: int
     deny: int
@@ -209,7 +209,7 @@ class Overwrite(TypedDict):
 
 @final
 class Channel(TypedDict):
-    id: str
+    id: int
     type: int
     guild_id: NotRequired[int | None]
     name: NotRequired[str | None]
@@ -244,38 +244,38 @@ async def get_channel(
 
 @final
 class ChannelMention(TypedDict):
-    message_id: str
-    channel_id: str
+    message_id: int
+    channel_id: int
 
 
 @final
 class UserMention(TypedDict):
-    user_id: str
-    channel_id: str
+    user_id: int
+    channel_id: int
 
 
 @final
 class Message(TypedDict):
-    id: str
-    channel_id: str
-    author_id: str
+    id: int
+    channel_id: int
+    author_id: int
     content: str
     timestamp: str
     edited_timestamp: NotRequired[str | None]
     mention_everyone: bool
     pinned: bool
     pinned_at: NotRequired[str | None]
-    referenced_message_id: str | None
+    referenced_message_id: int | None
     flags: int
 
     # mentions
-    channel_mentions: NotRequired[list[str]]
-    user_mentions: NotRequired[list[str]]
-    role_mentions: NotRequired[list[str]]
+    channel_mentions: NotRequired[list[int]]
+    user_mentions: NotRequired[list[int]]
+    role_mentions: NotRequired[list[int]]
 
 
 async def get_message(
-    db: Annotated[DB, Depends(use_db)], message_id: Annotated[str, Path()]
+    db: Annotated[DB, Depends(use_db)], message_id: Annotated[int, Path()]
 ) -> Message:
     message = await f1(
         "SELECT * FROM messages WHERE id = $1;", db, message_id, t=Message
@@ -306,7 +306,7 @@ async def get_message(
     return message
 
 
-async def get_messages(db: DB, channel_id: str, limit: int = 25) -> list[Message]:
+async def get_messages(db: DB, channel_id: int, limit: int = 25) -> list[Message]:
     messages = await f1(
         f"SELECT * FROM messages WHERE channel_id = $1 LIMIT {limit};",
         db,
@@ -346,9 +346,9 @@ async def get_messages(db: DB, channel_id: str, limit: int = 25) -> list[Message
 
 @final
 class ReadState(TypedDict):
-    channel_id: str
+    channel_id: int
     mentions: int
-    last_message_id: str
+    last_message_id: int
 
 
 async def get_channel_read_state(
@@ -372,7 +372,7 @@ async def get_channel_read_state(
 
 @final
 class MessageReaction(TypedDict):
-    message_id: str
-    user_id: str
+    message_id: int
+    user_id: int
     created_at: str
     emoji: str

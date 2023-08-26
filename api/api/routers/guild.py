@@ -10,7 +10,7 @@ from ..controllers.rate_limiter import ScopedRateLimiter, UnscopedRateLimiter
 from ..controllers.rpc import publish_guild, publish_user
 from ..error import Err
 from ..flags import ChannelTypes, MessageFlags
-from ..identity import make_ulid
+from ..identity import make_snowflake
 from ..models import Guild, Member, Message, User
 from ..models import get_guild as ggui
 from ..models import get_member, get_permissions
@@ -44,9 +44,9 @@ class DeleteGuild(BaseModel):
     password: str = Field(min_length=8, max_length=100)
 
 
-@guilds.get("/guilds/{guild_id}", depends=[Depends(ScopedRateLimiter())])
+@guilds.get("/guilds/{guild_id}", dependencies=[Depends(ScopedRateLimiter())])
 async def get_guild(
-    guild: Annotated[Guild, ggui], _member: Annotated[Member, get_member]
+    guild: Annotated[Guild, ggui], member: Annotated[Member, get_member]
 ) -> Guild:
     return guild
 
@@ -59,162 +59,158 @@ async def create_guild(
     db: Annotated[DB, Depends(use_db)],
     user: Annotated[User, Depends(gusr)],
 ) -> Guild:
-    trans = db.transaction()
-    await trans.start()
-
-    guild_id = make_ulid()
-
-    await commit(
-        "INSERT INTO guilds (id, name, type) VALUES ($1, $2, $3);",
-        db,
-        guild_id,
-        model.name,
-        model.type,
-    )
-
-    joined_at = now().isoformat()
-
-    await commit(
-        "INSERT INTO members (user_id, guild_id, joined_at) VALUES ($1, $2, $3);",
-        db,
-        user["id"],
-        guild_id,
-        joined_at,
-    )
-
-    # generate 3 ids for category, text channel, and welcome message
-    category_id, channel_id, message_id = (
-        make_ulid(),
-        make_ulid(),
-        make_ulid(),
-    )
-
-    create_channel = await db.prepare(
-        "INSERT INTO channels (id, type, guild_id, name, position, parent_id, last_message_id)"
-        "VALUES ($1, $2, $3, $4, $5, $6, $7)"
-    )
-
-    await create_channel.executemany(
-        # category
-        (
-            category_id,
-            int(ChannelTypes.CATEGORY_CHANNEL),
-            guild_id,
-            "General",
-            0,
-            None,
-            None,
-        ),
-        # text channel
-        (
-            channel_id,
-            int(ChannelTypes.TEXT_CHANNEL),
-            guild_id,
-            "general",
-            0,
-            category_id,
-            message_id,
-        ),
-    )
-    message_created = now().isoformat()
-    content = random.choice(WELCOME_MESSAGES)
-
-    await commit(
-        "INSERT INTO messages (id, channel_id, author_id, flags, content, timestamp) "
-        "VALUES ($1, $2, $3, $4, $5, $6);",
-        db,
-        message_id,
-        channel_id,
-        user["id"],
-        int(MessageFlags.WELCOME_MESSAGE),
-        content,
-        message_created,
-    )
-
-    if not user["bot"]:
-        pos = await f1(
-            "SELECT max(position) + 1 FROM guild_slots WHERE user_id = $1 AND folder_id = $2;",
-            db,
-            user["id"],
-            None,
-        )
+    async with db.transaction():
+        guild_id = make_snowflake()
 
         await commit(
-            "INSERT INTO guild_slots (user_id, folder_id, position, guild_id) VALUES ($1, $2, $3, $4)",
+            "INSERT INTO guilds (id, name, type) VALUES ($1, $2, $3);",
             db,
-            user["id"],
-            None,
-            pos,
             guild_id,
+            model.name,
+            model.type,
         )
 
-    await trans.commit()
+        joined_at = now().isoformat()
 
-    guild: Guild = {
-        "id": guild_id,
-        "permissions": 0,
-        "features": [],
-        "name": model.name,
-        "icon": None,
-        "max_members": 1000,
-        "owner_id": user["id"],
-        "system_channel_id": channel_id,
-        "type": model.type,
-        "member": {
-            "user_id": user["id"],
-            "guild_id": guild_id,
-            "deaf": False,
-            "joined_at": joined_at,
-            "mute": False,
-            "nick": None,
-        },
-        "channels": [
+        await commit(
+            "INSERT INTO members (user_id, guild_id, joined_at) VALUES ($1, $2, $3);",
+            db,
+            user["id"],
+            guild_id,
+            joined_at,
+        )
+
+        # generate 3 ids for category, text channel, and welcome message
+        category_id, channel_id, message_id = (
+            make_snowflake(),
+            make_snowflake(),
+            make_snowflake(),
+        )
+
+        create_channel = await db.prepare(
+            "INSERT INTO channels (id, type, guild_id, name, position, parent_id, last_message_id)"
+            "VALUES ($1, $2, $3, $4, $5, $6, $7)"
+        )
+
+        await create_channel.executemany(
             # category
-            {
-                "id": category_id,
-                "guild_id": guild_id,
-                "name": "General",
-                "parent_id": None,
-                "position": 0,
-                "topic": None,
-                "type": int(ChannelTypes.CATEGORY_CHANNEL),
-            },
-            # channel
-            {
-                "id": channel_id,
-                "guild_id": guild_id,
-                "name": "general",
-                "last_message_id": message_id,
-                "parent_id": category_id,
-                "position": 0,
-                "topic": None,
-                "type": int(ChannelTypes.TEXT_CHANNEL),
-            },
-        ],
-        "roles": [],
-    }
-    message: Message = {
-        "id": message_id,
-        "author_id": user["id"],
-        "flags": int(MessageFlags.WELCOME_MESSAGE),
-        "channel_id": channel_id,
-        "channel_mentions": [],
-        "content": content,
-        "edited_timestamp": None,
-        "mention_everyone": False,
-        "pinned": False,
-        "pinned_at": None,
-        "referenced_message_id": None,
-        "role_mentions": [],
-        "timestamp": message_created,
-        "channel_mentions": [],
-        "user_mentions": [],
-    }
+            (
+                category_id,
+                int(ChannelTypes.CATEGORY_CHANNEL),
+                guild_id,
+                "General",
+                0,
+                None,
+                None,
+            ),
+            # text channel
+            (
+                channel_id,
+                int(ChannelTypes.TEXT_CHANNEL),
+                guild_id,
+                "general",
+                0,
+                category_id,
+                message_id,
+            ),
+        )
+        message_created = now().isoformat()
+        content = random.choice(WELCOME_MESSAGES)
 
-    await publish_user(user["id"], "GUILD_CREATE", guild)
-    await publish_user(user["id"], "MESSAGE_CREATE", message)
+        await commit(
+            "INSERT INTO messages (id, channel_id, author_id, flags, content, timestamp) "
+            "VALUES ($1, $2, $3, $4, $5, $6);",
+            db,
+            message_id,
+            channel_id,
+            user["id"],
+            int(MessageFlags.WELCOME_MESSAGE),
+            content,
+            message_created,
+        )
 
-    return guild
+        if not user["bot"]:
+            pos = await f1(
+                "SELECT max(position) + 1 FROM guild_slots WHERE user_id = $1 AND folder_id = $2;",
+                db,
+                user["id"],
+                None,
+            )
+
+            await commit(
+                "INSERT INTO guild_slots (user_id, folder_id, position, guild_id) VALUES ($1, $2, $3, $4)",
+                db,
+                user["id"],
+                None,
+                pos,
+                guild_id,
+            )
+
+        guild: Guild = {
+            "id": guild_id,
+            "permissions": 0,
+            "features": [],
+            "name": model.name,
+            "icon": None,
+            "max_members": 1000,
+            "owner_id": user["id"],
+            "system_channel_id": channel_id,
+            "type": model.type,
+            "member": {
+                "user_id": user["id"],
+                "guild_id": guild_id,
+                "deaf": False,
+                "joined_at": joined_at,
+                "mute": False,
+                "nick": None,
+            },
+            "channels": [
+                # category
+                {
+                    "id": category_id,
+                    "guild_id": guild_id,
+                    "name": "General",
+                    "parent_id": None,
+                    "position": 0,
+                    "topic": None,
+                    "type": int(ChannelTypes.CATEGORY_CHANNEL),
+                },
+                # channel
+                {
+                    "id": channel_id,
+                    "guild_id": guild_id,
+                    "name": "general",
+                    "last_message_id": message_id,
+                    "parent_id": category_id,
+                    "position": 0,
+                    "topic": None,
+                    "type": int(ChannelTypes.TEXT_CHANNEL),
+                },
+            ],
+            "roles": [],
+        }
+        message: Message = {
+            "id": message_id,
+            "author_id": user["id"],
+            "flags": int(MessageFlags.WELCOME_MESSAGE),
+            "channel_id": channel_id,
+            "channel_mentions": [],
+            "content": content,
+            "edited_timestamp": None,
+            "mention_everyone": False,
+            "pinned": False,
+            "pinned_at": None,
+            "referenced_message_id": None,
+            "role_mentions": [],
+            "timestamp": message_created,
+            "channel_mentions": [],
+            "user_mentions": [],
+        }
+
+        await publish_user(user["id"], "GUILD_CREATE", guild)
+        await publish_user(user["id"], "MESSAGE_CREATE", message)
+
+        return guild
 
 
 @guilds.patch("/guilds/{guild_id}", dependencies=[Depends(ScopedRateLimiter())])

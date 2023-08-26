@@ -19,7 +19,7 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.create_table(
         "users",
-        sa.Column("id", sa.Text(), primary_key=True),
+        sa.Column("id", sa.BigInteger(), primary_key=True),
         sa.Column("username", sa.Text(), index=True, unique=True),
         sa.Column("display_name", sa.Text(), nullable=True, default=None),
         sa.Column("avatar", sa.Text(), nullable=True, default=None),
@@ -32,7 +32,7 @@ def upgrade() -> None:
         "settings",
         sa.Column(
             "user_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             primary_key=True,
         ),
@@ -41,11 +41,11 @@ def upgrade() -> None:
     )
     op.create_table(
         "guilds",
-        sa.Column("id", sa.Text(), primary_key=True),
+        sa.Column("id", sa.BigInteger(), primary_key=True),
         sa.Column("name", sa.Text()),
         sa.Column("icon", sa.Text()),
-        sa.Column("owner_id", sa.Text()),
-        sa.Column("system_channel_id", sa.Text()),
+        sa.Column("owner_id", sa.BigInteger()),
+        sa.Column("system_channel_id", sa.BigInteger()),
         sa.Column("type", sa.Text(), default="community"),
         sa.Column("max_members", sa.Integer(), default=1000),
         sa.Column("permissions", sa.BigInteger()),
@@ -54,7 +54,7 @@ def upgrade() -> None:
         "guild_features",
         sa.Column(
             "guild_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("guilds.id", ondelete="CASCADE"),
             primary_key=True,
         ),
@@ -63,10 +63,10 @@ def upgrade() -> None:
 
     op.create_table(
         "guild_members",
-        sa.Column("user_id", sa.Text(), primary_key=True),
+        sa.Column("user_id", sa.BigInteger(), primary_key=True),
         sa.Column(
             "guild_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("guilds.id", ondelete="CASCADE"),
             primary_key=True,
         ),
@@ -77,31 +77,31 @@ def upgrade() -> None:
     )
     op.create_table(
         "member_assigned_roles",
-        sa.Column("user_id", sa.Text(), primary_key=True),
+        sa.Column("user_id", sa.BigInteger(), primary_key=True),
         sa.Column(
             "guild_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("guilds.id", ondelete="CASCADE"),
             primary_key=True,
         ),
-        sa.Column("role_id", sa.Text(), primary_key=True),
+        sa.Column("role_id", sa.BigInteger(), primary_key=True),
     )
     op.create_table(
         "devices",
-        sa.Column("id", sa.Text(), primary_key=True),
+        sa.Column("id", sa.BigInteger(), primary_key=True),
         sa.Column(
             "user_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             index=True,
         ),
     )
     op.create_table(
         "roles",
-        sa.Column("id", sa.Text(), primary_key=True),
+        sa.Column("id", sa.BigInteger(), primary_key=True),
         sa.Column(
             "guild_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("guilds.id", ondelete="CASCADE"),
             index=True,
         ),
@@ -113,27 +113,27 @@ def upgrade() -> None:
     )
     op.create_table(
         "guild_folders",
-        sa.Column("id", sa.Text(), primary_key=True),
-        sa.Column("user_id", sa.Text(), sa.ForeignKey("users.id", ondelete="CASCADE")),
+        sa.Column("id", sa.BigInteger(), primary_key=True),
+        sa.Column("user_id", sa.BigInteger(), sa.ForeignKey("users.id", ondelete="CASCADE")),
         sa.Column("name", sa.Text()),
     )
     op.create_table(
         "guild_slots",
         sa.Column(
             "guild_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("guilds.id", ondelete="CASCADE"),
             primary_key=True,
         ),
         sa.Column(
             "user_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             primary_key=True,
         ),
         sa.Column(
             "folder_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("guild_folders.id", ondelete="SET NULL"),
             nullable=True,
         ),
@@ -141,11 +141,11 @@ def upgrade() -> None:
     )
     op.create_table(
         "channels",
-        sa.Column("id", sa.Text(), primary_key=True),
+        sa.Column("id", sa.BigInteger(), primary_key=True),
         sa.Column("type", sa.Integer()),
         sa.Column(
             "guild_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("guilds.id", ondelete="CASCADE"),
             nullable=True,
             index=True,
@@ -153,10 +153,11 @@ def upgrade() -> None:
         sa.Column("name", sa.Text(), nullable=True),
         sa.Column("position", sa.Integer(), nullable=True),
         sa.Column("topic", sa.Text(), nullable=True),
-        sa.Column("last_message_id", sa.Text(), nullable=True),
+        # relations are shit. hence why I don't have a girlfriend :(
+        sa.Column("last_message_id", sa.BigInteger(), nullable=True),
         sa.Column(
             "parent_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("channels.id", ondelete="SET NULL"),
             nullable=True,
         ),
@@ -164,16 +165,16 @@ def upgrade() -> None:
     )
     op.create_table(
         "messages",
-        sa.Column("id", sa.Text(), primary_key=True),
+        sa.Column("id", sa.BigInteger(), primary_key=True),
         sa.Column(
             "channel_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("channels.id", ondelete="CASCADE"),
             index=True,
         ),
         sa.Column(
             "author_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("users.id", ondelete="SET NULL"),
             nullable=True,
         ),
@@ -183,35 +184,35 @@ def upgrade() -> None:
         sa.Column("mention_everyone", sa.Boolean()),
         sa.Column("pinned", sa.Boolean()),
         sa.Column("pinned_at", sa.TIMESTAMP, nullable=True),
-        sa.Column("referenced_message_id", sa.Text(), nullable=True),
+        sa.Column("referenced_message_id", sa.BigInteger(), nullable=True),
         sa.Column("flags", sa.BigInteger()),
     )
     op.create_table(
         "message_channel_mentions",
-        sa.Column("channel_id", sa.Text(), primary_key=True),
+        sa.Column("channel_id", sa.BigInteger(), primary_key=True),
         sa.Column(
             "message_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("messages.id", ondelete="CASCADE"),
             primary_key=True,
         ),
     )
     op.create_table(
         "message_user_mentions",
-        sa.Column("user_id", sa.Text(), primary_key=True),
+        sa.Column("user_id", sa.BigInteger(), primary_key=True),
         sa.Column(
             "message_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("messages.id", ondelete="CASCADE"),
             primary_key=True,
         ),
     )
     op.create_table(
         "message_role_mentions",
-        sa.Column("role_id", sa.Text(), primary_key=True),
+        sa.Column("role_id", sa.BigInteger(), primary_key=True),
         sa.Column(
             "message_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("messages.id", ondelete="CASCADE"),
             primary_key=True,
         ),
@@ -220,25 +221,25 @@ def upgrade() -> None:
         "read_states",
         sa.Column(
             "user_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             primary_key=True,
         ),
         sa.Column(
             "channel_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("channels.id", ondelete="CASCADE"),
             primary_key=True,
         ),
         sa.Column("mentions", sa.BigInteger()),
-        sa.Column("last_message_id", sa.Text()),
+        sa.Column("last_message_id", sa.BigInteger()),
     )
     op.create_table(
         "permission_overwrites",
-        sa.Column("id", sa.Text(), primary_key=True),
+        sa.Column("id", sa.BigInteger(), primary_key=True),
         sa.Column(
             "channel_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("channels.id", ondelete="CASCADE"),
             primary_key=True,
         ),
@@ -250,13 +251,13 @@ def upgrade() -> None:
         "message_reactions",
         sa.Column(
             "message_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("messages.id", ondelete="CASCADE"),
             primary_key=True,
         ),
         sa.Column(
             "user_id",
-            sa.Text(),
+            sa.BigInteger(),
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             primary_key=True,
         ),

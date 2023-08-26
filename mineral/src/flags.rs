@@ -12,10 +12,17 @@ bitflags! {
         const ADMIN = 1 << 1;
         const VERIFIED = 1 << 2;
         const EARLY_SUPPORTER = 1 << 3;
+        const VERIFIED_EMAIL =  1 << 4;
     }
 }
 
 impl UserFlags {
+    pub fn default() -> Self {
+        let mut ret = Self::empty();
+        ret.toggle(Self::EARLY_SUPPORTER);
+        return ret;
+    }
+
     pub fn clear(&mut self) {
         *self.0.bits_mut() = 0;
     }

@@ -3,18 +3,12 @@ import threading
 import time
 from typing import TYPE_CHECKING
 
-import ulid
-
 __all__ = ("make_snowflake", "make_bucket", "make_buckets")
 
 
 BUCKET_SIZE = 1000 * 60 * 60 * 24 * 7
 DERAILED_EPOCH = 1692174214599
 INCR = 0
-
-
-def make_ulid() -> str:
-    return ulid.from_timestamp(int(time.time() * 1000) - DERAILED_EPOCH).str
 
 
 def make_snowflake() -> int:

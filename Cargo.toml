@@ -1,2 +1,2 @@
 [workspace]
-members = ["crates/dbrs", "crates/data_service"]
+members = ["api-v1", "mineral"]

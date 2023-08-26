@@ -24,10 +24,12 @@ class UnscopedRateLimiter:
 
     async def __call__(
         self,
-        token_str: Annotated[str | None, Header(Undefined, alias="Authorization")],
+        request: Request,
         db: Annotated[DB, Depends(use_db)],
         redis: Annotated[redlib.Redis, Depends(use_redis)],
     ) -> None:
+        token_str = request.headers.get('authorization')
+
         if token_str is None:
             return
         else:
@@ -68,8 +70,9 @@ class ScopedRateLimiter:
         request: Request,
         response: Response,
         db: Annotated[DB, Depends(use_db)],
-        token_str: str | None = Header(Undefined, alias="Authorization"),
     ) -> None:
+        token_str = request.headers.get('authorization')
+
         # cannot be applied to non-users
         if token_str is None:
             return
