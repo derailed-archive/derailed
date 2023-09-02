@@ -1,49 +1,58 @@
-use itsdangerous::{default_builder, TimestampSigner, IntoTimestampSigner};
-use anyhow::Result;
 use crate::errors::CommonError;
-use crate::models::{User, Device};
-use crate::conn::{acquire, ex};
+use crate::models::{Device, User};
+use anyhow::Result;
+use base64::{
+    alphabet,
+    engine::{self, general_purpose},
+    Engine as _,
+};
+use itsdangerous::{default_builder, IntoTimestampSigner, TimestampSigner};
 
+static B64: engine::GeneralPurpose =
+    engine::GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD);
 
-fn get_device_from_token(token: &String) -> Result<i64> {
-    let fragments: Vec<&str> = token.split(".").collect();
-    if let Some(device_id_str) = fragments.get(0) {
-        let device_id: i64 = device_id_str.parse()?;
-        return Ok(device_id)
+pub fn create_token(device_id: &i64, password: String) -> String {
+    let enc_id = B64.encode(device_id.to_string());
+
+    let signer = default_builder(password).build().into_timestamp_signer();
+
+    signer.sign(enc_id)
+}
+
+fn get_device_from_token(token: &str) -> Result<i64> {
+    let fragments: Vec<&str> = token.split('.').collect();
+    if let Some(device_id_str) = fragments.first() {
+        let device_id_enc = B64.decode(device_id_str)?;
+        let device_id_dec = String::from_utf8(device_id_enc)?;
+        Ok(device_id_dec.parse::<i64>()?)
     } else {
-        return Err(CommonError::InvalidToken.into())
+        Err(CommonError::InvalidToken.into())
     }
 }
 
+pub async fn get_user(token: &String, session: impl Copy + sqlx::PgExecutor<'_>) -> Result<User> {
+    let device_id = get_device_from_token(token)?;
 
-pub async fn get_user(token: &String) -> Result<User> {
-    let device_id = get_device_from_token(&token)?;
-    let session = acquire().await;
+    let device = sqlx::query_as!(Device, "SELECT * FROM devices WHERE id = $1;", device_id)
+        .fetch_one(session)
+        .await;
 
-    let device_res = ex(
-        "SELECT * FROM devices WHERE id = ?;",
-        session,
-        (device_id,)
-    ).await?;
-
-    if let Ok(device) = device_res.first_row_typed::<Device>() {
+    if let Ok(device) = device {
         // if the user doesn't exist, we broke something badly
-        let user = ex(
-            "SELECT * FROM users WHERE id = ?;",
-            session,
-            (device.user_id,)
-        )
-            .await?
-            .first_row_typed::<User>()?;
+        let user = sqlx::query_as!(User, "SELECT * FROM users WHERE id = $1;", device.user_id)
+            .fetch_one(session)
+            .await?;
 
-        let signer = default_builder(user.clone().password).build().into_timestamp_signer();
+        let signer = default_builder(user.clone().password)
+            .build()
+            .into_timestamp_signer();
 
-        if let Ok(_) = signer.unsign(token) {
-            return Err(CommonError::InvalidToken.into())
+        if signer.unsign(token).is_ok() {
+            Err(CommonError::InvalidToken.into())
         } else {
-            return Ok(user)
+            Ok(user)
         }
     } else {
-        return Err(CommonError::InvalidAuthorization.into())
+        Err(CommonError::InvalidAuthorization.into())
     }
 }

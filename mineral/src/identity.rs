@@ -1,5 +1,5 @@
-use std::time::SystemTime;
 use std::sync::OnceLock;
+use std::time::SystemTime;
 
 pub static DERAILED_EPOCH: i64 = 1649325271415;
 static BUCKET_SIZE: i64 = 1000 * 60 * 60 * 24 * 7;

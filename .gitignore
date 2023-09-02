@@ -13,3 +13,4 @@ node_modules
 test.py
 .mypy_cache
 data/
+.sqlx

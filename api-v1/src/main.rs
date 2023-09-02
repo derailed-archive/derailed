@@ -1,7 +1,8 @@
+use actix_web::{App, HttpServer};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
-use actix_web::{HttpServer, App};
+mod routes;
 
 pub fn configure_tracing(level: String) {
     let subscriber = tracing_subscriber::fmt::layer().pretty();
@@ -18,11 +19,13 @@ pub fn configure_tracing(level: String) {
 async fn main() -> std::io::Result<()> {
     configure_tracing("debug".to_owned());
 
+    dotenvy::dotenv().expect("Failed to load .env");
+
+    mineral::acquire().await;
+
     log::info!("Starting up on http://127.0.0.1:14000");
 
-    HttpServer::new(move || {
-        App::new()
-    })
+    HttpServer::new(move || App::new().configure(routes::app))
         .bind("0.0.0.0:14000")?
         .run()
         .await

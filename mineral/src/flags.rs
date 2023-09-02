@@ -1,13 +1,11 @@
 use bitflags::bitflags;
 
-
 // For anyone sneaking around here:
 // https://docs.rs/bitflags/2.3.3/bitflags/example_generated/struct.Flags.html
 
-
 bitflags! {
     #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-    pub struct UserFlags: u64 {
+    pub struct UserFlags: i64 {
         const STAFF = 1 << 0;
         const ADMIN = 1 << 1;
         const VERIFIED = 1 << 2;
@@ -20,7 +18,7 @@ impl UserFlags {
     pub fn default() -> Self {
         let mut ret = Self::empty();
         ret.toggle(Self::EARLY_SUPPORTER);
-        return ret;
+        ret
     }
 
     pub fn clear(&mut self) {
