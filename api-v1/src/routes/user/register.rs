@@ -1,4 +1,4 @@
-use actix_web::{get, web::Json};
+use actix_web::{post, web::Json};
 use mineral::{
     acquire,
     auth::create_token,
@@ -28,7 +28,7 @@ struct CreateUserResult {
 
 /// PRIVATE ROUTE. Public user creation. Not admin
 /// user creation route.
-#[get("/register")]
+#[post("/register")]
 async fn register(data: Json<CreateUser>) -> CommonResult<Json<CreateUserResult>> {
     let session = acquire().await;
 
