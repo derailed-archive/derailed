@@ -1,3 +1,4 @@
+use crate::routes::user::TokenResult;
 use actix_web::{post, web::Json};
 use mineral::{
     acquire,
@@ -18,18 +19,10 @@ struct CreateUser {
     password: String,
 }
 
-#[derive(Serialize, Debug)]
-struct CreateUserResult {
-    /// The user object created
-    user: User,
-    /// The token used for authorization.
-    token: String,
-}
-
 /// PRIVATE ROUTE. Public user creation. Not admin
 /// user creation route.
 #[post("/register")]
-async fn register(data: Json<CreateUser>) -> CommonResult<Json<CreateUserResult>> {
+async fn register(data: Json<CreateUser>) -> CommonResult<Json<TokenResult>> {
     let session = acquire().await;
 
     let mut tx = session
@@ -43,14 +36,15 @@ async fn register(data: Json<CreateUser>) -> CommonResult<Json<CreateUserResult>
 
     sqlx::query!(
         r#"INSERT INTO users
-        (id, username, password, email, bot, system)
-        VALUES ($1, $2, $3, $4, $5, $6);"#,
+        (id, username, password, email, bot, system, flags)
+        VALUES ($1, $2, $3, $4, $5, $6, $7);"#,
         &id,
         data.username,
         &password,
         data.email,
         false,
-        false
+        false,
+        UserFlags::def().bits()
     )
     .execute(tx.as_mut())
     .await
@@ -77,7 +71,7 @@ async fn register(data: Json<CreateUser>) -> CommonResult<Json<CreateUserResult>
 
     tx.commit().await.map_err(|_| CommonError::InternalError)?;
 
-    Ok(Json(CreateUserResult {
+    Ok(Json(TokenResult {
         user: User {
             id,
             username: data.clone().username,
@@ -85,7 +79,7 @@ async fn register(data: Json<CreateUser>) -> CommonResult<Json<CreateUserResult>
             avatar: None,
             password: password.clone(),
             email: Some(data.clone().email),
-            flags: UserFlags::default().bits(),
+            flags: UserFlags::def().bits(),
             bot: false,
             system: false,
         },

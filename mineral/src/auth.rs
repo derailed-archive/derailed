@@ -30,8 +30,8 @@ fn get_device_from_token(token: &str) -> Result<i64> {
     }
 }
 
-pub async fn get_user(token: &String, session: impl Copy + sqlx::PgExecutor<'_>) -> Result<User> {
-    let device_id = get_device_from_token(token)?;
+pub async fn get_user(token: String, session: impl Copy + sqlx::PgExecutor<'_>) -> Result<User> {
+    let device_id = get_device_from_token(token.as_str())?;
 
     let device = sqlx::query_as!(Device, "SELECT * FROM devices WHERE id = $1;", device_id)
         .fetch_one(session)
@@ -47,7 +47,7 @@ pub async fn get_user(token: &String, session: impl Copy + sqlx::PgExecutor<'_>)
             .build()
             .into_timestamp_signer();
 
-        if signer.unsign(token).is_ok() {
+        if signer.unsign(&token).is_ok() {
             Err(CommonError::InvalidToken.into())
         } else {
             Ok(user)

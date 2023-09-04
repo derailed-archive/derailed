@@ -15,6 +15,10 @@ pub enum CommonError {
     InvalidToken = 2001,
     #[error("Username or Password already taken")]
     UsernameOrPasswordTaken = 2002,
+    #[error("Invalid email")]
+    InvalidEmail = 2003,
+    #[error("Incorrect password")]
+    IncorrectPassword = 2004,
 }
 
 #[derive(Debug, Serialize)]
@@ -35,6 +39,8 @@ impl ResponseError for CommonError {
             Self::InvalidAuthorization => StatusCode::UNAUTHORIZED,
             Self::InvalidToken => StatusCode::UNAUTHORIZED,
             Self::UsernameOrPasswordTaken => StatusCode::BAD_REQUEST,
+            Self::InvalidEmail => StatusCode::BAD_REQUEST,
+            Self::IncorrectPassword => StatusCode::BAD_REQUEST,
         }
     }
 

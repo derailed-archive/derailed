@@ -15,7 +15,7 @@ bitflags! {
 }
 
 impl UserFlags {
-    pub fn default() -> Self {
+    pub fn def() -> Self {
         let mut ret = Self::empty();
         ret.toggle(Self::EARLY_SUPPORTER);
         ret
