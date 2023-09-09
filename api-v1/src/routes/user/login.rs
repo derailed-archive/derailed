@@ -11,7 +11,7 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct LoginData {
-    pub email: String,
+    pub username: String,
     pub password: String,
 }
 
@@ -19,10 +19,14 @@ pub struct LoginData {
 pub async fn login(data: Json<LoginData>) -> CommonResult<Json<TokenResult>> {
     let session = acquire().await;
 
-    let user = sqlx::query_as!(User, "SELECT * FROM users WHERE email = $1", &data.email)
-        .fetch_optional(session)
-        .await
-        .map_err(|_| CommonError::InternalError)?;
+    let user = sqlx::query_as!(
+        User,
+        "SELECT * FROM users WHERE username = $1",
+        &data.username
+    )
+    .fetch_optional(session)
+    .await
+    .map_err(|_| CommonError::InternalError)?;
 
     if let Some(usr) = user {
         // should this be InternalError instead?
@@ -52,6 +56,6 @@ pub async fn login(data: Json<LoginData>) -> CommonResult<Json<TokenResult>> {
             token: create_token(&device.id, usr.password),
         }))
     } else {
-        Err(CommonError::InvalidEmail)
+        Err(CommonError::InvalidUsername)
     }
 }

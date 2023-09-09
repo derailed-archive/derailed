@@ -8,7 +8,7 @@ pub async fn acquire() -> &'static PgPool {
         db
     } else {
         let pool = PgPoolOptions::new()
-            .connect(&env::var("PG_URL").unwrap())
+            .connect(&env::var("DATABASE_URL").unwrap())
             .await
             .unwrap();
         pool.acquire().await.unwrap();

@@ -23,7 +23,6 @@ def upgrade() -> None:
         sa.Column("username", sa.Text(), index=True, unique=True, nullable=False),
         sa.Column("display_name", sa.Text(), nullable=True, default=None),
         sa.Column("avatar", sa.Text(), nullable=True, default=None),
-        sa.Column("email", sa.Text(), unique=True, index=True, nullable=True),
         sa.Column("password", sa.Text(), nullable=False),
         sa.Column("flags", sa.BIGINT, nullable=False),
         sa.Column("bot", sa.Boolean(), nullable=False, default=False),

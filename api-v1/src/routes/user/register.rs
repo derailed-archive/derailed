@@ -13,8 +13,6 @@ use serde::{Deserialize, Serialize};
 struct CreateUser {
     /// The username wanted for this user
     username: String,
-    /// An email used for authentication
-    email: String,
     /// Password for authentication
     password: String,
 }
@@ -36,12 +34,12 @@ async fn register(data: Json<CreateUser>) -> CommonResult<Json<TokenResult>> {
 
     sqlx::query!(
         r#"INSERT INTO users
-        (id, username, password, email, bot, system, flags)
-        VALUES ($1, $2, $3, $4, $5, $6, $7);"#,
+        (id, username, password, bot, system, flags)
+        VALUES
+        ($1, $2, $3, $4, $5, $6);"#,
         &id,
         data.username,
         &password,
-        data.email,
         false,
         false,
         UserFlags::def().bits()
@@ -52,7 +50,7 @@ async fn register(data: Json<CreateUser>) -> CommonResult<Json<TokenResult>> {
         let er = err.into_database_error().unwrap();
 
         if er.is_unique_violation() {
-            CommonError::UsernameOrPasswordTaken
+            CommonError::UsernameTaken
         } else {
             CommonError::InternalError
         }
@@ -78,7 +76,6 @@ async fn register(data: Json<CreateUser>) -> CommonResult<Json<TokenResult>> {
             display_name: None,
             avatar: None,
             password: password.clone(),
-            email: Some(data.clone().email),
             flags: UserFlags::def().bits(),
             bot: false,
             system: false,

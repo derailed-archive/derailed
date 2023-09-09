@@ -13,7 +13,6 @@ time = "0.3.23"
 tokio = { version = "1", features = ["full"] }
 itsdangerous = { version = "0.4.1", features = ["serde", "serde_json"] }
 base64 = "0.21.2"
-anyhow = "1.0.75"
 thiserror = "1.0.47"
 utoipa = "3.5.0"
 sqlx = { version = "0.7.1", features = ["postgres", "runtime-tokio", "time", "macros"] }

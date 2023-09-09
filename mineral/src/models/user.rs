@@ -17,9 +17,6 @@ pub struct User {
     /// This user's hashed password.
     #[serde(skip_serializing)]
     pub password: String,
-    /// The unique email of this user.
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub email: Option<String>,
     /// This user's public flags
     pub flags: i64,
     /// Whether this user is a bot or not

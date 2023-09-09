@@ -13,12 +13,14 @@ pub enum CommonError {
     InvalidAuthorization = 2000,
     #[error("Invalid user token")]
     InvalidToken = 2001,
-    #[error("Username or Password already taken")]
-    UsernameOrPasswordTaken = 2002,
-    #[error("Invalid email")]
-    InvalidEmail = 2003,
+    #[error("Username already taken")]
+    UsernameTaken = 2002,
+    #[error("Invalid username")]
+    InvalidUsername = 2003,
     #[error("Incorrect password")]
     IncorrectPassword = 2004,
+    #[error("User does not exist")]
+    UserDoesNotExist = 3000,
 }
 
 #[derive(Debug, Serialize)]
@@ -38,9 +40,10 @@ impl ResponseError for CommonError {
             Self::InternalError => StatusCode::INTERNAL_SERVER_ERROR,
             Self::InvalidAuthorization => StatusCode::UNAUTHORIZED,
             Self::InvalidToken => StatusCode::UNAUTHORIZED,
-            Self::UsernameOrPasswordTaken => StatusCode::BAD_REQUEST,
-            Self::InvalidEmail => StatusCode::BAD_REQUEST,
+            Self::UsernameTaken => StatusCode::BAD_REQUEST,
+            Self::InvalidUsername => StatusCode::BAD_REQUEST,
             Self::IncorrectPassword => StatusCode::BAD_REQUEST,
+            Self::UserDoesNotExist => StatusCode::NOT_FOUND,
         }
     }
 
