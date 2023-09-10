@@ -47,7 +47,7 @@ pub struct GuildSlot {
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
-pub struct DBFolder {
+pub struct Folder {
     /// The id of this folder
     id: i64,
     /// The name of this folder.
@@ -56,20 +56,6 @@ pub struct DBFolder {
     name: Option<String>,
     /// The user whom this folder belongs to.
     user_id: String,
-}
-
-#[derive(Serialize, Debug, Clone, ToSchema)]
-pub struct GuildFolder {
-    /// The id of this folder
-    id: i64,
-    /// The name of this folder.
-    /// If None and id == User.id, this is the default folder
-    /// otherwise if None, it should be the name of some of the Guilds inside combined.
-    name: Option<String>,
-    /// The user whom this folder belongs to.
-    user_id: String,
-    /// The slots inside this folder.
-    slots: Vec<GuildSlot>,
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
@@ -80,7 +66,9 @@ pub struct Settings {
     /// The latest active status of this User.
     status: i8,
     /// The folders owned by this User.
-    guild_folders: Vec<GuildFolder>,
+    guild_folders: Vec<Folder>,
+    /// A list of Guild positions.
+    guild_slots: Vec<GuildSlot>
 }
 
 /// Represents a device which a user has.

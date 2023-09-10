@@ -240,8 +240,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0942ffc6dcaadf03badf6e6a2d0228460359d5e34b57ccdc720b7382dfbd5ec5"
 
 [[package]]
-name = "api-v1"
-version = "0.1.0"
+name = "api"
+version = "0.0.0"
 dependencies = [
  "actix-web",
  "bcrypt",

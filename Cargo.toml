@@ -1,2 +1,6 @@
 [workspace]
-members = ["api-v1", "mineral"]
+members = ["api", "mineral"]
+
+[profile.release]
+opt-level = 3
+lto = true
