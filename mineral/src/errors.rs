@@ -21,6 +21,14 @@ pub enum CommonError {
     IncorrectPassword = 2004,
     #[error("User does not exist")]
     UserDoesNotExist = 3000,
+    // 4000, 5000, and 6000 are all reserved
+    // for "bad data" errors.
+    #[error("Invalid channel position")]
+    InvalidChannelPosition = 4000,
+    #[error("A category channel cannot have a parent")]
+    CatNoParent = 4001,
+    #[error("Channel parent does not exist")]
+    ParentDoesNotExist = 4002,
 }
 
 #[derive(Debug, Serialize)]
@@ -44,6 +52,9 @@ impl ResponseError for CommonError {
             Self::InvalidUsername => StatusCode::BAD_REQUEST,
             Self::IncorrectPassword => StatusCode::BAD_REQUEST,
             Self::UserDoesNotExist => StatusCode::NOT_FOUND,
+            Self::InvalidChannelPosition => StatusCode::BAD_REQUEST,
+            Self::CatNoParent => StatusCode::BAD_REQUEST,
+            Self::ParentDoesNotExist => StatusCode::BAD_REQUEST,
         }
     }
 

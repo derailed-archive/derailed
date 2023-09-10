@@ -2,5 +2,4 @@
 members = ["api", "mineral"]
 
 [profile.release]
-opt-level = 3
 lto = true

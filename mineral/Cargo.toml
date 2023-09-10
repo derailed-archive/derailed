@@ -9,7 +9,7 @@ edition = "2021"
 bitflags = "2.3.3"
 num-bigint = "0.4.3"
 serde = { version = "1.0.180", features = ["derive"] }
-time = "0.3.23"
+time = {version = "0.3.23", features = ["serde", "formatting"]}
 tokio = { version = "1", features = ["full"] }
 itsdangerous = { version = "0.4.1", features = ["serde", "serde_json"] }
 base64 = "0.21.2"

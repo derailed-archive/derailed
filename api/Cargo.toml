@@ -16,3 +16,5 @@ serde = { version = "1.0.188", features = ["derive"] }
 bcrypt = "0.15.0"
 dotenvy = "0.15.7"
 sqlx = { version = "0.7.1", features = ["postgres", "runtime-tokio", "time", "macros"] }                
+serde_valid = "0.16.3"
+regex = "1.9.5"

@@ -3,7 +3,7 @@
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT NOT NULL PRIMARY KEY,
     username VARCHAR(32) UNIQUE NOT NULL,
-    display_name VARCHAR(2048) DEFAULT NULL,
+    display_name VARCHAR(32) DEFAULT NULL,
     avatar TEXT DEFAULT NULL,
     password TEXT NOT NULL,
     flags BIGINT NOT NULL,
@@ -118,7 +118,7 @@ CREATE TABLE IF NOT EXISTS channels (
     guild_id BIGINT,
     name VARCHAR(32),
     position INT,
-    topic VARCHAR(2048),
+    topic VARCHAR(4096),
     last_message_id BIGINT,
     parent_id BIGINT,
     sync_parent_permissions BOOLEAN,

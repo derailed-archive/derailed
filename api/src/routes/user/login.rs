@@ -1,4 +1,4 @@
-use crate::routes::user::TokenResult;
+use crate::routes::TokenResult;
 use actix_web::{post, web::Json};
 use mineral::{
     acquire,
