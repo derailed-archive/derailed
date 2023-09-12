@@ -1,5 +1,6 @@
 use crate::errors::{CommonError, CommonResult};
-use crate::models::{Device, User};
+use crate::utils::merge_db_guild;
+use crate::{DBGuild, Device, Guild, Member, User};
 use actix_web::HttpRequest;
 use base64::{
     alphabet,
@@ -82,5 +83,49 @@ pub async fn fisr(
         .await
     } else {
         Err(CommonError::InvalidAuthorization)
+    }
+}
+
+pub async fn get_member(
+    guild_id: &i64,
+    user: &User,
+    session: impl Copy + sqlx::PgExecutor<'_>,
+) -> CommonResult<(Guild, Member)> {
+    let member = sqlx::query_as!(
+        Member,
+        "SELECT * FROM guild_members WHERE user_id = $1 AND guild_id = $2;",
+        user.id,
+        guild_id
+    )
+    .fetch_optional(session)
+    .await
+    .map_err(|_| CommonError::InternalError)?;
+
+    if let Some(mem) = member {
+        let db_guild =
+            sqlx::query_as!(DBGuild, "SELECT * FROM guilds WHERE id = $1;", mem.guild_id)
+                .fetch_one(session)
+                .await
+                .map_err(|_| CommonError::InternalError)?;
+
+        let features_rec = sqlx::query!(
+            "SELECT feature FROM guild_features WHERE id = $1;",
+            guild_id
+        )
+        .fetch_all(session)
+        .await
+        .map_err(|_| CommonError::InternalError)?;
+
+        let mut features = Vec::new();
+
+        for feat in features_rec.iter() {
+            features.push(feat.feature.clone());
+        }
+
+        let guild = merge_db_guild(db_guild, Some(features), None, None);
+
+        Ok((guild, mem))
+    } else {
+        Err(CommonError::NotAGuildMember)
     }
 }

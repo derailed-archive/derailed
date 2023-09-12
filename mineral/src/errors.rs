@@ -19,6 +19,8 @@ pub enum CommonError {
     InvalidUsername = 2003,
     #[error("Incorrect password")]
     IncorrectPassword = 2004,
+    #[error("Invalid permission")]
+    InvalidPermissions = 2005,
     #[error("User does not exist")]
     UserDoesNotExist = 3000,
     // 4000, 5000, and 6000 are all reserved
@@ -29,6 +31,10 @@ pub enum CommonError {
     CatNoParent = 4001,
     #[error("Channel parent does not exist")]
     ParentDoesNotExist = 4002,
+    #[error("Invalid permission bit set")]
+    InvalidPermissionBitSet = 4003,
+    #[error("Not a member of this guild")]
+    NotAGuildMember = 4004,
 }
 
 #[derive(Debug, Serialize)]
@@ -51,10 +57,13 @@ impl ResponseError for CommonError {
             Self::UsernameTaken => StatusCode::BAD_REQUEST,
             Self::InvalidUsername => StatusCode::BAD_REQUEST,
             Self::IncorrectPassword => StatusCode::BAD_REQUEST,
+            Self::InvalidPermissions => StatusCode::FORBIDDEN,
             Self::UserDoesNotExist => StatusCode::NOT_FOUND,
             Self::InvalidChannelPosition => StatusCode::BAD_REQUEST,
             Self::CatNoParent => StatusCode::BAD_REQUEST,
             Self::ParentDoesNotExist => StatusCode::BAD_REQUEST,
+            Self::InvalidPermissionBitSet => StatusCode::BAD_GATEWAY,
+            Self::NotAGuildMember => StatusCode::FORBIDDEN,
         }
     }
 

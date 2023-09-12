@@ -68,6 +68,7 @@ CREATE TABLE IF NOT EXISTS roles (
     deny BIGINT NOT NULL,
     hoist BOOLEAN NOT NULL,
     mentionable BOOLEAN NOT NULL,
+    position INT NOT NULL,
     FOREIGN KEY (guild_id)
         REFERENCES guilds (id)
         ON DELETE CASCADe

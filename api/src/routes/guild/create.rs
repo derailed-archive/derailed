@@ -5,6 +5,7 @@ use mineral::{
     acquire,
     auth::fisr,
     errors::{CommonError, CommonResult},
+    flags::Permissions,
     make_snowflake, Channel, Guild,
 };
 use serde::Deserialize;
@@ -34,6 +35,10 @@ pub struct CreateGuild {
 
 #[post("/guilds")]
 pub async fn create_guild(req: HttpRequest, data: Json<CreateGuild>) -> CommonResult<Json<Guild>> {
+    if Permissions::from_bits(data.permissions.unwrap_or(0)).is_none() {
+        return Err(CommonError::InvalidPermissionBitSet);
+    }
+
     let session = acquire().await;
 
     let user = fisr(req, session).await?;
@@ -126,12 +131,11 @@ pub async fn create_guild(req: HttpRequest, data: Json<CreateGuild>) -> CommonRe
     let mut real_chans = vec![];
 
     for channel in channels.iter() {
-        let snowflake_id: i64;
-        if channel.channel_type == 0 {
-            snowflake_id = *parent_ids.get(&channel.id.unwrap()).unwrap();
+        let snowflake_id = if channel.channel_type == 0 {
+            *parent_ids.get(&channel.id.unwrap()).unwrap()
         } else {
-            snowflake_id = mineral::make_snowflake();
-        }
+            mineral::make_snowflake()
+        };
 
         sqlx::query!(
             r#"INSERT INTO channels (id, name, guild_id, type, position, topic, parent_id, sync_parent_permissions)

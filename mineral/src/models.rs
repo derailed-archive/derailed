@@ -130,10 +130,9 @@ pub struct Member {
     /// Originating Guild ID of this member
     pub guild_id: i64,
     /// The nickname chosen for this member
-    pub nick: String,
+    pub nick: Option<String>,
     /// When this member joined
-    #[serde(with = "time::serde::iso8601")]
-    pub joined_at: sqlx::types::time::OffsetDateTime,
+    pub joined_at: chrono::NaiveDateTime,
     /// Whether this member is deafened globally from Voice
     pub deaf: bool,
     /// Whether this member is muted globally from Voice
@@ -175,15 +174,12 @@ pub struct Message {
     pub channel_id: i64,
     pub author_id: Option<i64>,
     pub content: String,
-    #[serde(with = "time::serde::iso8601")]
-    pub timestamp: sqlx::types::time::OffsetDateTime,
-    #[serde(with = "time::serde::iso8601::option")]
-    pub edited_timestamp: Option<time::OffsetDateTime>,
+    pub timestamp: chrono::NaiveDateTime,
+    pub edited_timestamp: Option<chrono::NaiveDateTime>,
     pub mention_everyone: bool,
     pub pinned: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    #[serde(with = "time::serde::iso8601::option")]
-    pub pinned_at: Option<time::OffsetDateTime>,
+    pub pinned_at: Option<chrono::NaiveDateTime>,
     pub referenced_message_id: Option<i64>,
     pub flags: i64,
 }
@@ -210,6 +206,5 @@ pub struct MessageReaction {
     pub message_id: i64,
     pub user_id: i64,
     pub emoji: String,
-    #[serde(with = "time::serde::iso8601")]
-    pub created_at: sqlx::types::time::OffsetDateTime,
+    pub created_at: chrono::NaiveDateTime,
 }

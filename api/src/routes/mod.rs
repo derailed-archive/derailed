@@ -12,6 +12,9 @@ pub fn app(cfg: &mut web::ServiceConfig) {
         user::get_current_user_service,
         user::get_user_service,
         user::modify_current_user_service,
+        // guilds
+        guild::create_guild,
+        guild::modify_guild
     ];
     cfg.service(s);
 }

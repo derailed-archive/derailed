@@ -9,12 +9,12 @@ edition = "2021"
 bitflags = "2.3.3"
 num-bigint = "0.4.3"
 serde = { version = "1.0.180", features = ["derive"] }
-time = {version = "0.3.23", features = ["serde", "formatting"]}
 tokio = { version = "1", features = ["full"] }
 itsdangerous = { version = "0.4.1", features = ["serde", "serde_json"] }
 base64 = "0.21.2"
 thiserror = "1.0.47"
 utoipa = "3.5.0"
-sqlx = { version = "0.7.1", features = ["postgres", "runtime-tokio", "time", "macros"] }
+sqlx = { version = "0.7.1", features = ["postgres", "runtime-tokio", "chrono", "macros"] }
 actix-web = "4.4.0"
 serde_json = "1.0.105"
+chrono = { version = "0.4.*", features = ["serde"] }
