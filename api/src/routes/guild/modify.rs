@@ -82,5 +82,7 @@ pub async fn modify_guild(
         guild.name = name;
     }
 
+    tx.commit().await.map_err(|_| CommonError::InternalError)?;
+
     Ok(Json(guild))
 }
