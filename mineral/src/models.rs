@@ -121,6 +121,15 @@ pub struct Guild {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub roles: Option<Vec<Role>>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub available: Option<bool>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub approximate_member_count: Option<i64>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub approximate_presence_count: Option<i32>,
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]

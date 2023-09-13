@@ -17,5 +17,8 @@ pub fn merge_db_guild(
         features,
         channels,
         roles,
+        available: None,
+        approximate_member_count: None,
+        approximate_presence_count: None
     }
 }

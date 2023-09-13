@@ -175,8 +175,11 @@ pub async fn create_guild(req: HttpRequest, data: Json<CreateGuild>) -> CommonRe
         max_members: 1000,
         permissions: json.permissions.unwrap_or(0),
         features: Some(vec![]),
-        channels: Some(vec![]),
+        channels: Some(real_chans),
         roles: Some(vec![]),
+        available: None,
+        approximate_member_count: None,
+        approximate_presence_count: None,
     };
 
     Ok(Json(guild))

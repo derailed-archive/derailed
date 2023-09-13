@@ -2,6 +2,7 @@ use actix_web::{App, HttpServer};
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
+mod brewery;
 mod routes;
 
 pub fn configure_tracing(level: String) {
