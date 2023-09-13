@@ -40,7 +40,7 @@ pub enum CommonError {
 #[derive(Debug, Serialize)]
 pub struct ErrorResp {
     pub code: i32,
-    pub message: Option<String>,
+    pub message: String,
 }
 
 pub type CommonResult<T> = Result<T, CommonError>;
@@ -69,7 +69,7 @@ impl ResponseError for CommonError {
 
     fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
         let res = HttpResponse::new(self.status_code());
-        let message: Option<String> = None;
+        let message: String = Self::to_string(&self);
 
         let b = ErrorResp {
             code: *self as i32,
