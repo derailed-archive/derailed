@@ -1,3 +1,6 @@
+use crate::auth::B64;
+use base64::Engine as _;
+use rand::Rng;
 use std::sync::OnceLock;
 use std::time::SystemTime;
 
@@ -48,4 +51,18 @@ pub fn make_snowflake() -> i64 {
     SF_INCR.set(incr).unwrap();
 
     epoch
+}
+
+pub fn make_invite_id() -> String {
+    let random_bytes: [u8; 16] = rand::thread_rng().gen();
+    let base64_encoded = B64.encode(random_bytes);
+
+    // Remove any non-alphanumeric characters and take the first 6 characters
+    let invite_id = base64_encoded
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .take(6)
+        .collect::<String>();
+
+    invite_id
 }

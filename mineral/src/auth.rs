@@ -9,7 +9,7 @@ use base64::{
 };
 use itsdangerous::{default_builder, IntoTimestampSigner, TimestampSigner};
 
-static B64: engine::GeneralPurpose =
+pub static B64: engine::GeneralPurpose =
     engine::GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD);
 
 pub fn create_token(device_id: &i64, password: String) -> String {

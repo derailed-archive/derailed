@@ -14,3 +14,4 @@ DROP TABLE IF EXISTS messages;
 DROP TABLE IF EXISTS read_states;
 DROP TABLE IF EXISTS permission_overwrites;
 DROP TABLE IF EXISTS message_reactions;
+DROP TABLE IF EXISTS invites;

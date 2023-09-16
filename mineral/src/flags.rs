@@ -69,7 +69,7 @@ pub async fn get_permissions(
     member: &Member,
     session: impl Copy + sqlx::PgExecutor<'_>,
 ) -> CommonResult<Permissions> {
-    let roles = sqlx::query_as!(
+    let mut roles = sqlx::query_as!(
         RoleData,
         r#"SELECT allow, deny, position FROM roles WHERE id IN
         (SELECT role_id FROM member_assigned_roles WHERE user_id = $1 AND guild_id = $2);"#,
@@ -92,8 +92,10 @@ pub async fn get_permissions(
 
     let mut sorted_roles = Vec::new();
 
+    roles.sort_by(|row1, row2| row1.position.cmp(&row2.position));
+
     for role in roles.iter() {
-        sorted_roles.insert(role.position as usize, (role.allow, role.deny))
+        sorted_roles.push((role.allow, role.deny));
     }
 
     for (allow, deny) in sorted_roles.iter() {
@@ -108,6 +110,72 @@ pub async fn get_permissions(
     }
 
     Ok(perms)
+}
+
+struct ChannelRoleData {
+    id: i64,
+    position: i64,
+}
+
+pub struct PermissionOverwrite {
+    pub id: i64,
+    pub channel_id: i64,
+    pub r#type: i32,
+    pub allow: i64,
+    pub deny: i64,
+}
+
+// NOTE: `permissions` is role + @everyone permissions. Seen above
+pub async fn get_channel_permissions(
+    guild_id: &i64,
+    channel_id: &i64,
+    member: &Member,
+    permissions: &Permissions,
+    session: impl Copy + sqlx::PgExecutor<'_>,
+) -> CommonResult<Permissions> {
+    let mut roles = sqlx::query_as!(
+        ChannelRoleData,
+        r#"SELECT id, position FROM roles WHERE id IN
+        (SELECT role_id FROM member_assigned_roles WHERE user_id = $1 AND guild_id = $2);"#,
+        &member.user_id,
+        guild_id
+    )
+    .fetch_all(session)
+    .await
+    .map_err(|_| CommonError::InternalError)?;
+
+    roles.push(ChannelRoleData {
+        id: *guild_id,
+        position: 0,
+    });
+
+    roles.sort_by(|role1, role2| role1.position.cmp(&role2.position));
+
+    let overwrites = sqlx::query_as!(
+        PermissionOverwrite,
+        r#"SELECT * FROM permission_overwrites WHERE channel_id = $1;"#,
+        channel_id
+    )
+    .fetch_all(session)
+    .await
+    .map_err(|_| CommonError::InternalError)?;
+
+    let mut role_ids = Vec::new();
+
+    for role in roles {
+        role_ids.push(role.id);
+    }
+
+    let mut perms = permissions.bits();
+
+    for overwrite in overwrites {
+        if role_ids.contains(&overwrite.id) || overwrite.id == member.user_id {
+            perms |= overwrite.allow;
+            perms &= overwrite.deny;
+        }
+    }
+
+    Ok(Permissions::from_bits(perms).unwrap())
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

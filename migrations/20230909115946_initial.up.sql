@@ -186,3 +186,18 @@ CREATE TABLE IF NOT EXISTS message_reactions (
         REFERENCES users (id)
         ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS invites (
+    id TEXT PRIMARY KEY,
+    guild_id BIGINT NOT NULL,
+    channel_id BIGINT,
+    author_id BIGINT,
+    FOREIGN KEY (guild_id)
+        REFERENCES guilds (id)
+        ON DELETE CASCADE,
+    FOREIGN KEY (channel_id)
+        REFERENCES channels (id)
+        ON DELETE SET NULL,
+    FOREIGN KEY (author_id)
+        REFERENCES users (id)
+        ON DELETE SET NULL
+);

@@ -13,7 +13,10 @@ use mineral::{
 };
 
 #[get("/guilds/{guild_id}")]
-async fn get_guild_preview(req: HttpRequest, guild_id_path: Path<i64>) -> CommonResult<Json<Guild>> {
+async fn get_guild_preview(
+    req: HttpRequest,
+    guild_id_path: Path<i64>,
+) -> CommonResult<Json<Guild>> {
     let guild_id = guild_id_path.into_inner();
     let session = acquire().await;
 
@@ -22,9 +25,7 @@ async fn get_guild_preview(req: HttpRequest, guild_id_path: Path<i64>) -> Common
 
     let mut wsi_client = get_client().await;
 
-    let request = brew::tonic::Request::new(brew::wsi::GuildInfo {
-        id: guild_id,
-    });
+    let request = brew::tonic::Request::new(brew::wsi::GuildInfo { id: guild_id });
 
     let activity = wsi_client
         .get_activity(request)

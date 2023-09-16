@@ -1,6 +1,7 @@
 use actix_web::{services, web};
 mod common_models;
 mod guild;
+mod invite;
 mod user;
 pub use common_models::*;
 

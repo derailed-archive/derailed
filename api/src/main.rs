@@ -1,9 +1,13 @@
 use actix_web::{App, HttpServer};
+use mimalloc::MiMalloc;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
 use tracing_subscriber::EnvFilter;
 mod brewery;
 mod routes;
+
+#[global_allocator]
+static GLOBAL: MiMalloc = MiMalloc;
 
 pub fn configure_tracing(level: String) {
     let subscriber = tracing_subscriber::fmt::layer().pretty();

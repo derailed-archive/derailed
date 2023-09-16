@@ -47,13 +47,15 @@ async fn register(data: Json<CreateUser>) -> CommonResult<Json<TokenResult>> {
     .execute(tx.as_mut())
     .await
     .map_err(|err| {
-        let er = err.into_database_error().unwrap();
+        let er = err.into_database_error();
 
-        if er.is_unique_violation() {
-            CommonError::UsernameTaken
-        } else {
-            CommonError::InternalError
+        if let Some(error) = er {
+            if error.is_unique_violation() {
+                return CommonError::UsernameTaken;
+            }
         }
+
+        CommonError::InternalError
     })?;
 
     sqlx::query!(

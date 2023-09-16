@@ -18,3 +18,4 @@ sqlx = { version = "0.7.1", features = ["postgres", "runtime-tokio", "chrono", "
 actix-web = "4.4.0"
 serde_json = "1.0.105"
 chrono = { version = "0.4.*", features = ["serde"] }
+rand = "0.8.5"

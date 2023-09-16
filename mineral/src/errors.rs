@@ -23,6 +23,10 @@ pub enum CommonError {
     InvalidPermissions = 2005,
     #[error("User does not exist")]
     UserDoesNotExist = 3000,
+    #[error("Channel does not exist")]
+    ChannelDoesNotExist = 3001,
+    #[error("Invite does not exist")]
+    InviteDoesNotExist = 3002,
     // 4000, 5000, and 6000 are all reserved
     // for "bad data" errors.
     #[error("Invalid channel position")]
@@ -59,6 +63,8 @@ impl ResponseError for CommonError {
             Self::IncorrectPassword => StatusCode::BAD_REQUEST,
             Self::InvalidPermissions => StatusCode::FORBIDDEN,
             Self::UserDoesNotExist => StatusCode::NOT_FOUND,
+            Self::ChannelDoesNotExist => StatusCode::NOT_FOUND,
+            Self::InviteDoesNotExist => StatusCode::NOT_FOUND,
             Self::InvalidChannelPosition => StatusCode::BAD_REQUEST,
             Self::CatNoParent => StatusCode::BAD_REQUEST,
             Self::ParentDoesNotExist => StatusCode::BAD_REQUEST,
@@ -69,7 +75,7 @@ impl ResponseError for CommonError {
 
     fn error_response(&self) -> actix_web::HttpResponse<actix_web::body::BoxBody> {
         let res = HttpResponse::new(self.status_code());
-        let message: String = Self::to_string(&self);
+        let message: String = Self::to_string(self);
 
         let b = ErrorResp {
             code: *self as i32,

@@ -8,6 +8,6 @@ pub mod utils;
 
 // exports
 pub use conn::{acquire, DB};
-pub use identity::{make_bucket, make_buckets, make_snowflake};
+pub use identity::{make_bucket, make_buckets, make_invite_id, make_snowflake};
 pub use models::*;
 pub use sqlx;
