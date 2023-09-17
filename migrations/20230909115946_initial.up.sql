@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS guild_members (
     user_id BIGINT NOT NULL,
     guild_id BIGINT NOT NULL,
     nick VARCHAR(32),
-    joined_at TIMESTAMP NOT NULL,
+    joined_at TIMESTAMP WITH TIME ZONE NOT NULL,
     deaf BOOLEAN NOT NULL,
     mute BOOLEAN NOT NULL,
     PRIMARY KEY (user_id, guild_id),
@@ -135,11 +135,11 @@ CREATE TABLE IF NOT EXISTS messages (
     channel_id BIGINT NOT NULL,
     author_id BIGINT,
     content VARCHAR(4096),
-    timestamp TIMESTAMP NOT NULL,
-    edited_timestamp TIMESTAMP,
+    timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    edited_timestamp TIMESTAMP WITH TIME ZONE,
     mention_everyone BOOLEAN NOT NULL,
     pinned BOOLEAN NOT NULL,
-    pinned_at TIMESTAMP,
+    pinned_at TIMESTAMP WITH TIME ZONE,
     referenced_message_id BIGINT,
     flags BIGINT NOT NULL DEFAULT 0,
     FOREIGN KEY (channel_id)
@@ -177,7 +177,7 @@ CREATE TABLE IF NOT EXISTS message_reactions (
     message_id BIGINT NOT NULL,
     user_id BIGINT NOT NULL,
     emoji TEXT NOT NULL,
-    created_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE NOT NULL,
     PRIMARY KEY (message_id, user_id, emoji),
     FOREIGN KEY (message_id)
         REFERENCES messages (id)

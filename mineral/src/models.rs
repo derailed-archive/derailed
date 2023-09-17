@@ -130,6 +130,9 @@ pub struct Guild {
     #[serde(default)]
     #[serde(skip_serializing_if = "Option::is_none")]
     pub approximate_presence_count: Option<i32>,
+    #[serde(default)]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub member: Option<Member>,
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
@@ -141,7 +144,8 @@ pub struct Member {
     /// The nickname chosen for this member
     pub nick: Option<String>,
     /// When this member joined
-    pub joined_at: chrono::NaiveDateTime,
+    #[serde(with = "time::serde::iso8601")]
+    pub joined_at: time::OffsetDateTime,
     /// Whether this member is deafened globally from Voice
     pub deaf: bool,
     /// Whether this member is muted globally from Voice
@@ -157,6 +161,7 @@ pub struct Role {
     pub deny: i64,
     pub hoist: bool,
     pub mentionable: bool,
+    pub position: i32,
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
@@ -183,12 +188,15 @@ pub struct Message {
     pub channel_id: i64,
     pub author_id: Option<i64>,
     pub content: String,
-    pub timestamp: chrono::NaiveDateTime,
-    pub edited_timestamp: Option<chrono::NaiveDateTime>,
+    #[serde(with = "time::serde::iso8601")]
+    pub timestamp: time::OffsetDateTime,
+    #[serde(with = "time::serde::iso8601::option")]
+    pub edited_timestamp: Option<time::OffsetDateTime>,
     pub mention_everyone: bool,
     pub pinned: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub pinned_at: Option<chrono::NaiveDateTime>,
+    #[serde(with = "time::serde::iso8601::option")]
+    pub pinned_at: Option<sqlx::types::time::OffsetDateTime>,
     pub referenced_message_id: Option<i64>,
     pub flags: i64,
 }
@@ -215,7 +223,8 @@ pub struct MessageReaction {
     pub message_id: i64,
     pub user_id: i64,
     pub emoji: String,
-    pub created_at: chrono::NaiveDateTime,
+    #[serde(with = "time::serde::iso8601")]
+    pub created_at: time::OffsetDateTime,
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]

@@ -39,6 +39,8 @@ pub enum CommonError {
     InvalidPermissionBitSet = 4003,
     #[error("Not a member of this guild")]
     NotAGuildMember = 4004,
+    #[error("Already a member of this guild")]
+    AlreadyAGuildMember = 4005,
 }
 
 #[derive(Debug, Serialize)]
@@ -70,6 +72,7 @@ impl ResponseError for CommonError {
             Self::ParentDoesNotExist => StatusCode::BAD_REQUEST,
             Self::InvalidPermissionBitSet => StatusCode::BAD_GATEWAY,
             Self::NotAGuildMember => StatusCode::FORBIDDEN,
+            Self::AlreadyAGuildMember => StatusCode::BAD_REQUEST,
         }
     }
 

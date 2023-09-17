@@ -6,7 +6,7 @@ use mineral::{
     auth::fisr,
     errors::{CommonError, CommonResult},
     flags::Permissions,
-    make_snowflake, Channel, Guild,
+    make_snowflake, Channel, Guild, Member,
 };
 use serde::Deserialize;
 use serde_valid::Validate;
@@ -66,6 +66,20 @@ pub async fn create_guild(req: HttpRequest, data: Json<CreateGuild>) -> CommonRe
         &user.id
     )
     .execute(tx.as_mut())
+    .await
+    .map_err(|_| CommonError::InternalError)?;
+
+    let member = sqlx::query_as!(
+        Member,
+        "INSERT INTO guild_members (user_id, guild_id, joined_at, deaf, mute, nick) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *;",
+        &user.id,
+        &guild_id,
+        time::OffsetDateTime::now_utc(),
+        false,
+        false,
+        Option::<String>::None
+    )
+    .fetch_one(tx.as_mut())
     .await
     .map_err(|_| CommonError::InternalError)?;
 
@@ -176,6 +190,7 @@ pub async fn create_guild(req: HttpRequest, data: Json<CreateGuild>) -> CommonRe
         available: None,
         approximate_member_count: None,
         approximate_presence_count: None,
+        member: Some(member),
     };
 
     publish_user(user.id, "GUILD_CREATE", &guild, &mut client).await?;

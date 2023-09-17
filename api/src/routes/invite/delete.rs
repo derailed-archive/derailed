@@ -10,7 +10,6 @@ use mineral::{
 #[delete("/guilds/{guild_id}/channels/{channel_id}/invites/{invite_id}")]
 async fn delete_invite(req: HttpRequest, path: Path<(i64, i64, String)>) -> CommonResult<String> {
     let (guild_id, channel_id, invite_id) = path.into_inner();
-
     let session = acquire().await;
     let user = fisr(req, session).await?;
 
