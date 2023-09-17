@@ -7,6 +7,8 @@ use mineral::{
 };
 use serde::Deserialize;
 
+use crate::brewery::{get_client, publish_user};
+
 #[derive(Debug, Deserialize, Clone)]
 pub struct ModifyUser {
     #[serde(default)]
@@ -102,7 +104,11 @@ pub async fn modify_current_user(
         user.display_name = display_name;
     }
 
+    let mut client = get_client().await;
+
     tx.commit().await.map_err(|_| CommonError::InternalError)?;
+
+    publish_user(user.id, "USER_CREATE", &user, &mut client).await?;
 
     Ok(Json(user))
 }

@@ -14,6 +14,8 @@ use mineral::{
 use serde::Deserialize;
 use serde_valid::Validate;
 
+use crate::brewery::{get_client, publish_guild};
+
 #[derive(Debug, Deserialize, Validate)]
 pub struct ModifyGuild {
     #[serde(default)]
@@ -82,7 +84,11 @@ pub async fn modify_guild(
         guild.name = name;
     }
 
+    let mut client = get_client().await;
+
     tx.commit().await.map_err(|_| CommonError::InternalError)?;
+
+    publish_guild(guild_id, "GUILD_UPDATE", &guild, &mut client).await?;
 
     Ok(Json(guild))
 }

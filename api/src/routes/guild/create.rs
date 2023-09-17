@@ -11,7 +11,10 @@ use mineral::{
 use serde::Deserialize;
 use serde_valid::Validate;
 
-use crate::routes::CreateChannel;
+use crate::{
+    brewery::{get_client, publish_user},
+    routes::CreateChannel,
+};
 
 fn community() -> String {
     "community".to_owned()
@@ -137,9 +140,10 @@ pub async fn create_guild(req: HttpRequest, data: Json<CreateGuild>) -> CommonRe
             mineral::make_snowflake()
         };
 
-        sqlx::query!(
+        real_chans.push(sqlx::query_as!(
+            Channel,
             r#"INSERT INTO channels (id, name, guild_id, type, position, topic, parent_id, sync_parent_permissions)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8);"#,
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *;"#,
             snowflake_id,
             &channel.name,
             &guild_id,
@@ -149,22 +153,14 @@ pub async fn create_guild(req: HttpRequest, data: Json<CreateGuild>) -> CommonRe
             channel.parent_id,
             &channel.sync_parent_permissions
         )
-        .execute(tx.as_mut())
+        .fetch_one(tx.as_mut())
         .await
-        .map_err(|_| CommonError::InternalError)?;
-
-        real_chans.push(Channel {
-            id: snowflake_id,
-            r#type: channel.channel_type as i32,
-            guild_id: Some(guild_id),
-            name: Some(channel.clone().name),
-            position: Some(channel.position.unwrap()),
-            topic: channel.clone().topic,
-            parent_id: channel.parent_id,
-            last_message_id: None,
-            sync_parent_permissions: Some(channel.sync_parent_permissions),
-        });
+        .map_err(|_| CommonError::InternalError)?);
     }
+
+    let mut client = get_client().await;
+
+    tx.commit().await.map_err(|_| CommonError::InternalError)?;
 
     let guild = Guild {
         id: guild_id,
@@ -181,6 +177,8 @@ pub async fn create_guild(req: HttpRequest, data: Json<CreateGuild>) -> CommonRe
         approximate_member_count: None,
         approximate_presence_count: None,
     };
+
+    publish_user(user.id, "GUILD_CREATE", &guild, &mut client).await?;
 
     Ok(Json(guild))
 }

@@ -274,6 +274,7 @@ dependencies = [
  "mineral",
  "regex",
  "serde",
+ "serde_json",
  "serde_valid",
  "sqlx",
  "tokio",
