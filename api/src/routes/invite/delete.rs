@@ -8,7 +8,10 @@ use mineral::{
 };
 
 #[delete("/guilds/{guild_id}/channels/{channel_id}/invites/{invite_id}")]
-async fn delete_invite(req: HttpRequest, path: Path<(i64, i64, String)>) -> CommonResult<String> {
+async fn delete_invite(
+    req: HttpRequest,
+    path: Path<(i64, i64, String)>,
+) -> CommonResult<&'static str> {
     let (guild_id, channel_id, invite_id) = path.into_inner();
     let session = acquire().await;
     let user = fisr(req, session).await?;
@@ -36,7 +39,7 @@ async fn delete_invite(req: HttpRequest, path: Path<(i64, i64, String)>) -> Comm
             .await
             .map_err(|_| CommonError::InternalError)?;
 
-        Ok("".to_owned())
+        Ok("")
     } else {
         Err(CommonError::InviteDoesNotExist)
     }
