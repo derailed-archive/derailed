@@ -42,7 +42,10 @@ export default defineConfig({
   ],
   theme: {
     colors: {
-        'quite-blue': '#0A1628'
+        'quite-blue': '#10151E'
+    },
+    backgroundImage: {
+        'trains-away': "url('assets/trains-away.jpg')"
     }
   }
 })

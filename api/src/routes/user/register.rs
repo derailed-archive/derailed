@@ -1,5 +1,5 @@
 use crate::routes::TokenResult;
-use actix_web::{post, web::Json};
+use actix_web::{post, web::Json, http};
 use mineral::{
     acquire,
     auth::create_token,
@@ -20,7 +20,7 @@ struct CreateUser {
 /// PRIVATE ROUTE. Public user creation. Not admin
 /// user creation route.
 #[post("/register")]
-async fn register(data: Json<CreateUser>) -> CommonResult<Json<TokenResult>> {
+async fn register(data: Json<CreateUser>) -> CommonResult<(Json<TokenResult>, http::StatusCode)> {
     let session = acquire().await;
 
     let mut tx = session
@@ -71,7 +71,7 @@ async fn register(data: Json<CreateUser>) -> CommonResult<Json<TokenResult>> {
 
     tx.commit().await.map_err(|_| CommonError::InternalError)?;
 
-    Ok(Json(TokenResult {
+    Ok((Json(TokenResult {
         user: User {
             id,
             username: data.clone().username,
@@ -83,5 +83,5 @@ async fn register(data: Json<CreateUser>) -> CommonResult<Json<TokenResult>> {
             system: false,
         },
         token: create_token(&device_id, password),
-    }))
+    }), http::StatusCode::CREATED))
 }

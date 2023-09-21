@@ -26,6 +26,10 @@ pub async fn publish_guild(
     model: &impl Serialize,
     client: &mut WsiClient<Channel>,
 ) -> CommonResult<()> {
+    if std::env::var("NO_GATEWAY").unwrap_or("true".to_owned()) == "true" {
+        return Ok(());
+    }
+
     let request = brew::tonic::Request::new(brew::wsi::Interchange {
         id: guild_id,
         t: t.to_string(),
@@ -46,6 +50,10 @@ pub async fn publish_user(
     model: &impl Serialize,
     client: &mut WsiClient<Channel>,
 ) -> CommonResult<()> {
+    if std::env::var("NO_GATEWAY").unwrap_or("true".to_owned()) == "true" {
+        return Ok(());
+    }
+
     let request = brew::tonic::Request::new(brew::wsi::Interchange {
         id: user_id,
         t: t.to_string(),
