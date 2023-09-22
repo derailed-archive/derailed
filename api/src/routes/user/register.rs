@@ -38,7 +38,7 @@ async fn register(data: Json<CreateUser>) -> CommonResult<(Json<TokenResult>, ht
         VALUES
         ($1, $2, $3, $4, $5, $6);"#,
         &id,
-        data.username,
+        data.username.to_lowercase(),
         &password,
         false,
         false,

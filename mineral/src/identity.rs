@@ -7,7 +7,7 @@ use std::time::SystemTime;
 pub static DERAILED_EPOCH: i64 = 1649325271415;
 static BUCKET_SIZE: i64 = 1000 * 60 * 60 * 24 * 7;
 
-static SF_INCR: OnceLock<i64> = OnceLock::new();
+static SF_GEN: OnceLock<SnowflakeGenerator> = OnceLock::new();
 
 // NOTE: these aren't public since these will eventually get replaced once Derailed gets distributed
 static WORKER_ID: i64 = 1;
@@ -30,27 +30,38 @@ pub fn make_buckets(start_id: i64, end_id: Option<i64>) -> std::ops::Range<i64> 
     make_bucket(start_id)..make_bucket(end_id.unwrap_or(curtime() * 1000))
 }
 
-pub fn make_snowflake() -> i64 {
-    let mut epoch = curtime();
+#[derive(Debug, Clone, Copy)]
+pub struct SnowflakeGenerator {
+    incr: i64
+}
 
-    epoch = (epoch - DERAILED_EPOCH) << 22;
-
-    epoch |= WORKER_ID << 17;
-
-    epoch |= PROCESS_ID.get_or_init(|| std::process::id() as i64 % 32);
-
-    if let Some(incr) = SF_INCR.get() {
-        epoch |= incr % 4096;
-        SF_INCR.set(incr + 1).unwrap();
-    } else {
-        SF_INCR.set(2).unwrap();
-        epoch |= 1;
+impl SnowflakeGenerator {
+    pub fn new() -> Self {
+        return Self {
+            incr: 0
+        }
     }
-    let incr = SF_INCR.get_or_init(|| 0) + 1;
-    epoch |= incr % 4096;
-    SF_INCR.set(incr).unwrap();
 
-    epoch
+    pub fn generate(mut self) -> i64 {
+        self.incr += 1;
+        let mut epoch = curtime();
+
+        epoch = epoch - DERAILED_EPOCH << 22;
+    
+        epoch |= (WORKER_ID % 32) << 17;
+    
+        epoch |= PROCESS_ID.get_or_init(|| std::process::id() as i64 % 32) << 12;
+    
+        epoch |= self.incr % 4096;
+    
+        epoch
+    }
+}
+
+pub fn make_snowflake() -> i64 {
+    let generator = SF_GEN.get_or_init(|| SnowflakeGenerator::new());
+
+    generator.generate()
 }
 
 pub fn make_invite_id() -> String {

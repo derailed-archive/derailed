@@ -22,7 +22,7 @@ pub async fn login(data: Json<LoginData>) -> CommonResult<Json<TokenResult>> {
     let user = sqlx::query_as!(
         User,
         "SELECT * FROM users WHERE username = $1",
-        &data.username
+        &data.username.to_lowercase()
     )
     .fetch_optional(session)
     .await

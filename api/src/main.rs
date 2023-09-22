@@ -1,4 +1,5 @@
 use actix_web::{App, HttpServer};
+use actix_cors::Cors;
 use mimalloc::MiMalloc;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -30,7 +31,17 @@ async fn main() -> std::io::Result<()> {
 
     log::info!("Starting up on http://127.0.0.1:14000");
 
-    HttpServer::new(move || App::new().configure(routes::app))
+    HttpServer::new(move || {
+        let cors = Cors::default()
+        .allow_any_origin()
+        .allow_any_header()
+        .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE"])
+        .max_age(86400);
+
+        App::new()
+        .configure(routes::app)
+        .wrap(cors)
+    })
         .bind("0.0.0.0:14000")?
         .run()
         .await
