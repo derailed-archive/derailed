@@ -39,7 +39,6 @@ Derailed is still a project in early pre-alpha. These are tools coming soon:
 Derailed is just starting to get reorganized at the moment. We will soon be working on
 our CI and further after being working on tests.
 
-We are also *soon* going to be configuring labels (not priority at the moment.)
 This means at the current moment Derailed may feel a bit disorganized outside of our codebase.
 
 # Deploying
