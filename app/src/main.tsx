@@ -5,8 +5,8 @@ import './index.css'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
 
-const Register = React.lazy(() => import("./components/Register"))
-const Login = React.lazy(() => import("./components/Login"))
+const Register = React.lazy(() => import("./pages/Register"))
+const Login = React.lazy(() => import("./pages/Login"))
 
 
 let router = createBrowserRouter([
