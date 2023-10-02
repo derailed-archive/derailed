@@ -52,7 +52,7 @@ pub async fn create_guild(req: HttpRequest, data: Json<CreateGuild>) -> CommonRe
         .map_err(|_| CommonError::InternalError)?;
 
     let json = data.into_inner();
-    let guild_id = make_snowflake();
+    let guild_id = make_snowflake().await;
 
     sqlx::query!(
         r#"INSERT INTO guilds
@@ -104,7 +104,7 @@ pub async fn create_guild(req: HttpRequest, data: Json<CreateGuild>) -> CommonRe
         },
     ];
     let mut parent_ids: HashMap<i64, i64> = HashMap::new();
-    parent_ids.insert(0, mineral::make_snowflake());
+    parent_ids.insert(0, mineral::make_snowflake().await);
 
     if let Some(chs) = json.channels {
         if let Some(channels) = chs {
@@ -151,7 +151,7 @@ pub async fn create_guild(req: HttpRequest, data: Json<CreateGuild>) -> CommonRe
         let snowflake_id = if channel.channel_type == 0 {
             *parent_ids.get(&channel.id.unwrap()).unwrap()
         } else {
-            mineral::make_snowflake()
+            mineral::make_snowflake().await
         };
 
         real_chans.push(sqlx::query_as!(

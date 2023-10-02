@@ -10,13 +10,13 @@ use mineral::{
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
-pub struct LoginData {
+struct LoginData {
     pub username: String,
     pub password: String,
 }
 
 #[post("/login")]
-pub async fn login(data: Json<LoginData>) -> CommonResult<Json<TokenResult>> {
+async fn login(data: Json<LoginData>) -> CommonResult<Json<TokenResult>> {
     let session = acquire().await;
 
     let user = sqlx::query_as!(
@@ -38,7 +38,7 @@ pub async fn login(data: Json<LoginData>) -> CommonResult<Json<TokenResult>> {
         }
 
         let device = Device {
-            id: make_snowflake(),
+            id: make_snowflake().await,
             user_id: usr.clone().id,
         };
 

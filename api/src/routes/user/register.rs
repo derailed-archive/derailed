@@ -29,8 +29,8 @@ async fn register(data: Json<CreateUser>) -> CommonResult<(Json<TokenResult>, ht
         .map_err(|_| CommonError::InternalError)?;
 
     let password = bcrypt::hash(&data.password, 16).map_err(|_| CommonError::InternalError)?;
-    let id = mineral::make_snowflake();
-    let device_id = mineral::make_snowflake();
+    let id = mineral::make_snowflake().await;
+    let device_id = mineral::make_snowflake().await;
 
     sqlx::query!(
         r#"INSERT INTO users
