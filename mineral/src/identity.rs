@@ -13,11 +13,18 @@ lazy_static! {
 }
 
 // NOTE: these aren't public since these will eventually get replaced once Derailed gets distributed
-static DATACENTER_ID: i64 = 0;
+static DATACENTER_ID: i64 = 1;
 
 fn curtime() -> i64 {
     match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
         Ok(n) => n.as_secs() as i64,
+        Err(_) => panic!("SystemTime before UNIX EPOCH!"),
+    }
+}
+
+fn mcurtime() -> i64 {
+    match SystemTime::now().duration_since(SystemTime::UNIX_EPOCH) {
+        Ok(n) => n.as_millis() as i64,
         Err(_) => panic!("SystemTime before UNIX EPOCH!"),
     }
 }
@@ -47,7 +54,7 @@ impl Snowflake {
     }
 
     fn get_time(&self) -> i64 {
-        time::OffsetDateTime::now_utc().unix_timestamp() - DERAILED_EPOCH
+        mcurtime() - DERAILED_EPOCH
     }
 
     fn fall(&mut self) -> i64 {
@@ -60,6 +67,7 @@ impl Snowflake {
 }
 
 
+// TODO: locks bad >:(
 pub async fn make_snowflake() -> i64 {
     SF.lock().await.fall()
 }
