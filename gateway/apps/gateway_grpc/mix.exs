@@ -32,7 +32,7 @@ defmodule Derailed.GRPC.MixProject do
       {:jsonrs, "~> 0.3.1"},
       {:session, in_umbrella: true},
       {:guilds, in_umbrella: true},
-      {:presences, in_umbrella: true},
+      {:presences, in_umbrella: true}
     ]
   end
 end

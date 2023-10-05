@@ -71,7 +71,8 @@ defmodule Derailed.Gateway.MixProject do
     [
       {:dotenvy, "~> 0.8.0"},
       {:ex_hash_ring, "~> 6.0"},
-      {:fastglobal, "~> 1.0"}
+      {:fastglobal, "~> 1.0"},
+      {:styler, "~> 0.9", only: [:dev, :test], runtime: false}
     ]
   end
 end

@@ -21,8 +21,11 @@ defmodule Derailed.GRPC.Server do
     user_id = exchange.id
 
     case GenRegistry.lookup(Derailed.SharedSession, user_id) do
-      {:ok, pid} -> Manifold.send(pid, {:publish, %{t: exchange.t, d: Jsonrs.decode!(exchange.d)}})
-      {:error, :not_found} -> :ok
+      {:ok, pid} ->
+        Manifold.send(pid, {:publish, %{t: exchange.t, d: Jsonrs.decode!(exchange.d)}})
+
+      {:error, :not_found} ->
+        :ok
     end
 
     %Google.Protobuf.Empty{}
