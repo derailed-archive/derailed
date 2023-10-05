@@ -7,8 +7,8 @@ defmodule Derailed.GRPC.Server do
   def publish_guild(exchange, _stream) do
     guild_id = exchange.id
 
-    case Derailed.Lookup.lookup(guild_id, Derailed.Guild, :guild) do
-      {:ok, pid} -> Manifold.send(pid, %{t: exchange.t, d: exchange.d})
+    case GenRegistry.lookup(Derailed.Guild, guild_id) do
+      {:ok, pid} -> Manifold.send(pid, %{t: exchange.t, d: Jsonrs.decode!(exchange.d)})
       {:error, :not_found} -> :ok
     end
 
@@ -20,8 +20,8 @@ defmodule Derailed.GRPC.Server do
   def publish_user(exchange, _stream) do
     user_id = exchange.id
 
-    case Derailed.Lookup.lookup(user_id, Derailed.SharedSession, :session) do
-      {:ok, pid} -> Manifold.send(pid, {:publish, %{t: exchange.t, d: exchange.d}})
+    case GenRegistry.lookup(Derailed.SharedSession, user_id) do
+      {:ok, pid} -> Manifold.send(pid, {:publish, %{t: exchange.t, d: Jsonrs.decode!(exchange.d)}})
       {:error, :not_found} -> :ok
     end
 
@@ -33,9 +33,11 @@ defmodule Derailed.GRPC.Server do
   def multipublish(exchange, _stream) do
     user_ids = exchange.uids
 
+    data = Jsonrs.decode(exchange.d)
+
     Enum.each(user_ids, fn user_id ->
-      case Derailed.Lookup.lookup(user_id, Derailed.SharedSession, :session) do
-        {:ok, pid} -> Manifold.send(pid, {:publish, %{t: exchange.t, d: exchange.d}})
+      case GenRegistry.lookup(Derailed.SharedSession, user_id) do
+        {:ok, pid} -> Manifold.send(pid, {:publish, %{t: exchange.t, d: data}})
         {:error, :not_found} -> :ok
       end
     end)
@@ -49,10 +51,10 @@ defmodule Derailed.GRPC.Server do
     guild_id = info.id
 
     activity =
-      case Derailed.Lookup.lookup(guild_id, Derailed.Guild, :guild) do
+      case GenRegistry.lookup(Derailed.Guild, guild_id) do
         {:ok, _pid} ->
           presences =
-            case Derailed.Lookup.lookup(guild_id, Derailed.Guild.Presences, :presence) do
+            case GenRegistry.lookup(Derailed.Guild.Presence, guild_id) do
               {:ok, pid} -> Derailed.Guild.Presences.count(pid)
               {:error, :not_found} -> 0
             end

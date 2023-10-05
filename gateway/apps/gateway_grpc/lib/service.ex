@@ -29,7 +29,7 @@ defmodule Derailed.GRPC.GuildMetadata do
 end
 
 defmodule Derailed.GRPC.Service do
-  use GRPC.Service, name: "derailed.wsi.WSI", protoc_gen_elixir_version: "0.15.0"
+  use GRPC.Service, name: "derailed.gateway.Gateway", protoc_gen_elixir_version: "0.15.0"
 
   rpc(:publish_guild, Derailed.GRPC.Interchange, Google.Protobuf.Empty)
   rpc(:publish_user, Derailed.GRPC.Interchange, Google.Protobuf.Empty)

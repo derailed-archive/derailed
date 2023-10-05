@@ -1,4 +1,4 @@
-defmodule Derailed.WSI.MixProject do
+defmodule Derailed.Gateway.MixProject do
   use Mix.Project
 
   def project do
@@ -9,20 +9,20 @@ defmodule Derailed.WSI.MixProject do
       deps: deps(),
       releases: [
         # different releases for different strategies:
-        # stack: the entirety of the Derailed WSI
-        # grpc: the entirety of the Derailed WSI's gRPC portion
-        # ws: the entirety of the Derailed WSI's WebSocket portion
-        # guild: the WSI guild portion
-        # session: the WSI session portion
-        # presence: the WSI presence portion
+        # stack: the entirety of the Derailed Gateway
+        # grpc: the entirety of the Derailed Gateway's gRPC portion
+        # ws: the entirety of the Derailed Gateway's WebSocket portion
+        # guild: the Gateway guild portion
+        # session: the Gateway session portion
+        # presence: the Gateway presence portion
 
         # grouped
         stack: [
           applications: [
-            dgrpc: :permanent,
+            gateway_grpc: :permanent,
             guilds: :permanent,
             sessions: :permanent,
-            uwsi: :permanent,
+            cowconn: :permanent,
             presence: :permanent,
             utils: :permanent
           ]
@@ -31,12 +31,12 @@ defmodule Derailed.WSI.MixProject do
         # singleton
         grpc: [
           applications: [
-            dgrpc: :permanent
+            gateway_grpc: :permanent
           ]
         ],
         ws: [
           applications: [
-            uwsi: :permanent,
+            cowconn: :permanent,
             utils: :permanent
           ]
         ],

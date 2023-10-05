@@ -1,6 +1,6 @@
 defmodule Derailed.Guild.Presences do
   @moduledoc """
-  WSI module responsible for tracking guild presences.
+  Gateway module responsible for tracking guild presences.
   """
   require Logger
   use GenServer

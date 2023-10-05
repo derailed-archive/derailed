@@ -1,9 +1,8 @@
 syntax = "proto3";
 
-import "google/protobuf/any.proto";
 import "google/protobuf/empty.proto";
 
-package derailed.wsi;
+package derailed.gateway;
 
 service WSI {
     rpc publish_guild (Interchange) returns (google.protobuf.Empty);
