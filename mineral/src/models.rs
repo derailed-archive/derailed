@@ -235,3 +235,32 @@ pub struct Invite {
     pub channel_id: Option<i64>,
     pub author_id: Option<i64>,
 }
+
+#[derive(Serialize, Debug, Clone, ToSchema)]
+pub struct DBTrack {
+    pub id: i64,
+    pub author_id: i64,
+    pub guild_id: i64,
+    pub origin_track_id: i64,
+    pub r#type: i32,
+    pub content: String
+}
+
+#[derive(Serialize, Debug, Clone, ToSchema)]
+pub struct Track {
+    pub id: i64,
+    pub author_id: i64,
+    pub guild_id: i64,
+    pub origin_track_id: i64,
+    pub r#type: i32,
+    pub content: String,
+    // NOTE: HashMap<Emoji, AmountOfReactions>
+    pub reactions: HashMap<String, i64>
+}
+
+#[derive(Serialize, Debug, Clone, ToSchema)]
+pub struct TrackReaction {
+    user_id: i64,
+    track_id: i64,
+    emoji: String
+}
