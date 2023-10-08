@@ -7,7 +7,17 @@ const twConfig = {
     './lib/**/*.{js,ts,jsx,tsx,mdx}'
   ],
   theme: {
-    extend: {},
+    extend: {
+      colors: {
+        'quite-blue': '#181a1f',
+        'unrailed': '#7364FF',
+        'blackbird': '#979CA7',
+        'quite-more-blue': '#22252b',
+      },
+      backgroundImage: {
+        'trains-away': "url('/trains-away.jpg')"
+      }
+    },
   },
   plugins: [],
 }
