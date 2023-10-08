@@ -1,5 +1,6 @@
 use serde::Serialize;
 use utoipa::ToSchema;
+use std::collections::HashMap;
 
 /// Represents a Derailed user.
 #[derive(Serialize, Debug, Clone, ToSchema)]
@@ -239,21 +240,21 @@ pub struct Invite {
 #[derive(Serialize, Debug, Clone, ToSchema)]
 pub struct DBTrack {
     pub id: i64,
-    pub author_id: i64,
-    pub guild_id: i64,
-    pub origin_track_id: i64,
+    pub author_id: Option<i64>,
+    pub guild_id: Option<i64>,
+    pub origin_track_id: Option<i64>,
     pub r#type: i32,
-    pub content: String
+    pub content: Option<String>,
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
 pub struct Track {
     pub id: i64,
-    pub author_id: i64,
-    pub guild_id: i64,
-    pub origin_track_id: i64,
+    pub author_id: Option<i64>,
+    pub guild_id: Option<i64>,
+    pub origin_track_id: Option<i64>,
     pub r#type: i32,
-    pub content: String,
+    pub content: Option<String>,
     // NOTE: HashMap<Emoji, AmountOfReactions>
     pub reactions: HashMap<String, i64>
 }

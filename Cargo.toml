@@ -1,5 +1,5 @@
 [workspace]
-members = ["api", "mineral", "brew"]
+members = ["api", "mineral", "brew", "thomas"]
 
 [profile.release]
 lto = true

@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS tracks (
 CREATE TABLE IF NOT EXISTS track_reaction (
     user_id BIGINT,
     track_id BIGINT,
-    emoji TEXT,
+    emoji TEXT NOT NULL,
     PRIMARY KEY (user_id, track_id),
     FOREIGN KEY (user_id)
         REFERENCES users (id)

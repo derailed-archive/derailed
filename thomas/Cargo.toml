@@ -1,0 +1,19 @@
+[package]
+name = "thomas"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+tokio = { version = "1", features = ["full"] }
+prost = "0.12"
+prost-types = "0.12"
+tonic = "0.10"
+sqlx = { version = "0.7.1", features = ["postgres", "runtime-tokio", "time", "macros"] }          
+mimalloc = { version = "*", default-features = false }
+mineral = { path = "../mineral" }
+serde_json = "1.0.107"
+
+[build-dependencies]
+tonic-build = { version = "0.10", features = ["prost"] }

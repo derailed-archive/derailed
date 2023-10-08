@@ -1,3 +1,3 @@
 fn main() {
-    tonic_build::compile_protos("../wsi.proto").unwrap();
+    tonic_build::compile_protos("../protos/wsi.proto").unwrap();
 }
