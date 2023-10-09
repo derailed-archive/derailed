@@ -6,17 +6,26 @@ use mineral::{
     User,
 };
 use serde::Deserialize;
+use serde_valid::Validate;
 
 use crate::brewery::{get_client, publish_user};
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Validate)]
 pub struct ModifyUser {
     #[serde(default)]
+    #[validate(min_length = 1)]
+    #[validate(max_length = 32)]
     pub username: Option<String>,
     #[serde(default)]
+    #[validate(min_length = 1)]
+    #[validate(max_length = 32)]
     pub password: Option<String>,
     #[serde(default)]
+    #[validate(min_length = 1)]
+    #[validate(max_length = 32)]
     pub display_name: Option<Option<String>>,
+    #[validate(min_length = 1)]
+    #[validate(max_length = 32)]
     pub verify_password: String,
 }
 

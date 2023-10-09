@@ -8,10 +8,15 @@ use mineral::{
     models::{Device, User},
 };
 use serde::Deserialize;
+use serde_valid::Validate;
 
-#[derive(Debug, Deserialize, Clone)]
+#[derive(Debug, Deserialize, Clone, Validate)]
 struct LoginData {
+    #[validate(min_length = 1)]
+    #[validate(max_length = 32)]
     pub username: String,
+    #[validate(min_length = 1)]
+    #[validate(max_length = 32)]
     pub password: String,
 }
 

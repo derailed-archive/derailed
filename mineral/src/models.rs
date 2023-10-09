@@ -261,7 +261,14 @@ pub struct Track {
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
 pub struct TrackReaction {
-    user_id: i64,
-    track_id: i64,
-    emoji: String
+    pub user_id: i64,
+    pub track_id: i64,
+    pub emoji: String
+}
+
+#[derive(Serialize, Debug, Clone, ToSchema)]
+pub struct Relationship {
+    pub origin_user_id: i64,
+    pub target_user_id: i64,
+    pub relation: i32
 }

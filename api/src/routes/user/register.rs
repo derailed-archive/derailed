@@ -1,5 +1,5 @@
 use crate::routes::TokenResult;
-use actix_web::{post, web::Json, http};
+use actix_web::{http, post, web::Json};
 use mineral::{
     acquire,
     auth::create_token,
@@ -8,12 +8,17 @@ use mineral::{
     User,
 };
 use serde::{Deserialize, Serialize};
+use serde_valid::Validate;
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, Validate)]
 struct CreateUser {
     /// The username wanted for this user
+    #[validate(min_length = 1)]
+    #[validate(max_length = 32)]
     username: String,
     /// Password for authentication
+    #[validate(min_length = 1)]
+    #[validate(max_length = 32)]
     password: String,
 }
 
@@ -71,17 +76,20 @@ async fn register(data: Json<CreateUser>) -> CommonResult<(Json<TokenResult>, ht
 
     tx.commit().await.map_err(|_| CommonError::InternalError)?;
 
-    Ok((Json(TokenResult {
-        user: User {
-            id,
-            username: data.clone().username,
-            display_name: None,
-            avatar: None,
-            password: password.clone(),
-            flags: UserFlags::def().bits(),
-            bot: false,
-            system: false,
-        },
-        token: create_token(&device_id, password),
-    }), http::StatusCode::CREATED))
+    Ok((
+        Json(TokenResult {
+            user: User {
+                id,
+                username: data.clone().username,
+                display_name: None,
+                avatar: None,
+                password: password.clone(),
+                flags: UserFlags::def().bits(),
+                bot: false,
+                system: false,
+            },
+            token: create_token(&device_id, password),
+        }),
+        http::StatusCode::CREATED,
+    ))
 }
