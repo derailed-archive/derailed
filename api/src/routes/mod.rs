@@ -2,7 +2,8 @@ use actix_web::{services, web};
 mod common_models;
 mod guild;
 mod invite;
-mod relationships;
+mod relationship;
+mod track;
 mod user;
 pub use common_models::*;
 
@@ -15,9 +16,7 @@ pub fn app(cfg: &mut web::ServiceConfig) {
         user::get_user_service,
         user::modify_current_user_service,
     ];
-    let s_relationships = services![
-        relationships::push_relationship,
-    ];
+    let s_relationships = services![relationship::push_relationship,];
     let _s_guilds = services![
         guild::create_guild,
         guild::modify_guild,

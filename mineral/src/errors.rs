@@ -29,6 +29,8 @@ pub enum CommonError {
     ChannelDoesNotExist = 3001,
     #[error("Invite does not exist")]
     InviteDoesNotExist = 3002,
+    #[error("Track does not exist")]
+    TrackDoesNotExist = 3003,
     // 4000, 5000, and 6000 are all reserved
     // for "bad data" errors.
     #[error("Invalid channel position")]
@@ -72,6 +74,7 @@ impl ResponseError for CommonError {
             Self::UserDoesNotExist => StatusCode::NOT_FOUND,
             Self::ChannelDoesNotExist => StatusCode::NOT_FOUND,
             Self::InviteDoesNotExist => StatusCode::NOT_FOUND,
+            Self::TrackDoesNotExist => StatusCode::NOT_FOUND,
             Self::InvalidChannelPosition => StatusCode::BAD_REQUEST,
             Self::CatNoParent => StatusCode::BAD_REQUEST,
             Self::ParentDoesNotExist => StatusCode::BAD_REQUEST,
