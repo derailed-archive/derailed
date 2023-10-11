@@ -2391,21 +2391,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "thomas"
-version = "0.1.0"
-dependencies = [
- "mimalloc",
- "mineral",
- "prost",
- "prost-types",
- "serde_json",
- "sqlx",
- "tokio",
- "tonic",
- "tonic-build",
-]
-
-[[package]]
 name = "thread_local"
 version = "1.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
