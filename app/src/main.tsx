@@ -9,7 +9,7 @@ const Register = React.lazy(() => import("./pages/Register"))
 const Login = React.lazy(() => import("./pages/Login"))
 
 
-let router = createBrowserRouter([
+const router = createBrowserRouter([
   {
     path: "/register",
     element: <React.Suspense children={<Register />}></React.Suspense>

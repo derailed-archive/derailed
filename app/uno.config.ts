@@ -8,20 +8,21 @@ export default defineConfig({
         fonts: {
             primary: [
                 {
-                    name: "Montserrat",
+                    name: "Lato",
                     weights: [
                         400,
+                        500,
                         600
                     ],
                     italic: true,
                     provider: "google"
                 },
                 {
-                    name: "Noto Sans",
+                    name: '"Noto Sans"',
                     provider: "none"
                 },
                 {
-                    name: "Helvetica Neue",
+                    name: '"Helvetica Neue"',
                     provider: "none"
                 },
                 {

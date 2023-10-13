@@ -1,9 +1,9 @@
 export interface User {
-    id: BigInt,
+    id: bigint,
     username: string,
     display_name: string | null,
     avatar: string | null,
-    flags: BigInt,
+    flags: bigint,
     bot: boolean,
     system: boolean
 }
