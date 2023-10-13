@@ -1,108 +1,81 @@
-import { useState, FormEvent } from "react"
-import { Navigate, useNavigate } from "react-router-dom"
+import { FormEvent, useState } from "react"
 import JSON from "json-bigint"
+import { useNavigate, Navigate } from "react-router-dom"
 import { User } from "../types"
 
-interface LoginResponse {
+interface Response {
     token: string,
+    // not important to us
     user: User,
 }
 
-export default () => {
-    if (localStorage.getItem("token") !== null) {
-        return <Navigate to="/channels/@me"></Navigate>
-    }
-
-    const navigate = useNavigate()
-    const [username, setUsername] = useState<string | null>(null)
-    const [password, setPassword] = useState<string | null>(null)
-    const [displayAlert, setDisplay] = useState<boolean>(false)
-    const [alert, setAlert] = useState<string>("")
-
-    const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault()
-
-        const API_URL: string = import.meta.env.VITE_API_URL
-
-        try {
-            let resp = await fetch(
-                API_URL.concat("/login"),
-                {
-                    method: "POST",
-                    body: JSON.stringify({
-                        'username': username!,
-                        'password': password!
-                    }),
-                    mode: 'cors',
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
-                },
-            )
-
-            if (resp.status == 200) {
-                const text = await resp.text()
-                let json = JSON.parse(text) as LoginResponse
-                console.log(text)
-                console.log(json)
-                console.log(json.token)
-                localStorage.setItem("token", json['token'])
-                navigate("/")
-            } else {
-                console.error(await resp.text())
-                let err_json = JSON.parse(await resp.text()) as object
-
-                if ('code' in err_json && err_json.code === 2004) {
-                    setAlert("Invalid Username!")
-                    setDisplay(true)
-                } else if ('code' in err_json && err_json.code === 2003) {
-                    setAlert("Invalid Username!")
-                    setDisplay(true)
-                }
-            }
-        // @ts-ignore
-        } catch(err: Error) {
-            setAlert(err)
-            setDisplay(true)
+export default function Login() {
+    if (typeof window !== 'undefined') {
+        if (localStorage.getItem("token") !== null) {
+            return <Navigate to="/users/@me" />
         }
     }
 
-    return (
-        <main className="bg-no-repeat antialiased font-primary m-auto text-white bg-cover min-h-screen flex flex-col justify-center items-center" style={{backgroundImage: "url('/assets/trains-away.jpg')"}}>
-            {displayAlert && (
-                <div className="w-screen bg-quite-blue text-white">
-                    <h2>
-                        An error occurred!
-                    </h2>
-                    <h4>
-                        {alert}
-                    </h4>
-                </div>
-            )}
-            <div className="bg-quite-blue rounded p-7 rounded-3">
-                <h1 className="font-semibold select-none text-2xl pb-2 max-w-sm text-center text-blackbird">
-                    Welcome back to <div className="text-unrailed">Derailed!</div>
-                </h1>
+    const nav = useNavigate()
+    const [username, setUsername] = useState<string>()
+    const [password, setPassword] = useState<string>()
 
-                <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
-                    <section className="flex flex-col gap-5">
-                        <div className="flex flex-col gap-1">
-                            <label className="select-none text-blackbird pl-1">Username</label>
-                            <input className="rounded bg-quite-more-blue border-0 p-2 text-white" type="text" id="username" minLength={1} maxLength={32} onChange={(event) => {setUsername(event.target.value)}} required />
-                        </div>
-                        <div className="flex flex-col gap-1">
-                            <label className="select-none text-blackbird pl-1">Password</label>
-                            <input className="rounded bg-quite-more-blue border-0 p-2 text-white" type="password" id="password" minLength={1} maxLength={70} onChange={(event) => {setPassword(event.target.value)}} required />
-                        </div>
-                    </section>
-                    <button type="submit" className="text-white outline-0 text-lg hover:bg-unrailed font-primary font-400 rounded-2 py-1 px-20 bg-quite-more-blue">
-                        Login
-                    </button>
-                    <div className="text-blackbird font-semibold pt-2 text-sm">
-                        Don't have an account? <a href="/register" className="no-underline text-unrailed">Register</a> instead.
-                    </div>
-                </form>
+    const [displayError, setDisplay] = useState<boolean>()
+    const [error, setError] = useState<string>()
+
+    const onSubmit = (event: FormEvent) => {
+        event.preventDefault()
+
+        fetch(
+            import.meta.env.VITE_API_URL! + "/login",
+            {
+                body: JSON.stringify({
+                    username,
+                    password,
+                }),
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            }
+        ).then(async (resp) => {
+            const body = JSON.parse(await resp.text()) as Response
+
+            localStorage.setItem("token", body.token)
+            nav("/users/@me")
+        }).catch((reason: Error) => {
+            console.error(reason)
+            setError(reason.toString())
+            setDisplay(true)
+        })
+    }
+
+    return (
+      <main className="flex min-h-screen bg-no-repeat antialiased bg-cover bg-trains-away font-primary">
+        {displayError && (
+            <div className="text-center">
+                {error}
             </div>
-        </main>
+        )}
+        <form className="flex flex-col p-10 rounded items-center m-auto bg-quite-blue justify-center text-center gap-6 text-blackbird" onSubmit={onSubmit}>
+            <h1 className="text-unrailed text-2xl max-w-xl">
+                Welcome back!
+            </h1>
+            <section className="flex flex-col gap-0.5 m-auto">
+                <label className="text-left">Username</label>
+                <input className="bg-quite-more-blue rounded p-1" type="text" id="username" minLength={1} maxLength={32} onChange={(event) => {setUsername(event.target.value)}} required />
+            </section>
+            <section className="flex flex-col gap-0.5 m-auto">
+                <label className="text-left">Password</label>
+                <input className="bg-quite-more-blue rounded p-1" type="password" id="password" minLength={1} maxLength={32} onChange={(event) => {setPassword(event.target.value)}} required />
+            </section>
+            <button type="submit" className="bg-quite-more-blue text-xl m-auto py-2 px-8 rounded-2xl">
+                Login
+            </button>
+            <div>
+                Don't have an account? <a className="text-unrailed font-medium" href="/register">Register</a> instead.
+            </div>
+        </form>
+      </main>
     )
-}
+  }

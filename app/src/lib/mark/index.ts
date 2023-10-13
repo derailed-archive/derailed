@@ -1,6 +1,6 @@
 // this is used *before* markdown parsing to clean out
 // HTML without removing it.
-const escapeHtml = (unsafe: String) => {
+const escapeHtml = (unsafe: string) => {
     return unsafe
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")

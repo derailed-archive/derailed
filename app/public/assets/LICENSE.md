@@ -1,1 +1,0 @@
-All works in this directory fall under the license of their respective owners.

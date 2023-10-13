@@ -21,12 +21,16 @@ pub enum CommonError {
     IncorrectPassword = 2004,
     #[error("Invalid permission")]
     InvalidPermissions = 2005,
+    #[error("You have been blocked by this User")]
+    Blocked = 2006,
     #[error("User does not exist")]
     UserDoesNotExist = 3000,
     #[error("Channel does not exist")]
     ChannelDoesNotExist = 3001,
     #[error("Invite does not exist")]
     InviteDoesNotExist = 3002,
+    #[error("Track does not exist")]
+    TrackDoesNotExist = 3003,
     // 4000, 5000, and 6000 are all reserved
     // for "bad data" errors.
     #[error("Invalid channel position")]
@@ -41,6 +45,8 @@ pub enum CommonError {
     NotAGuildMember = 4004,
     #[error("Already a member of this guild")]
     AlreadyAGuildMember = 4005,
+    #[error("Invalid relationship type")]
+    InvalidRelationshipType = 4006,
 }
 
 #[derive(Debug, Serialize)]
@@ -64,15 +70,18 @@ impl ResponseError for CommonError {
             Self::InvalidUsername => StatusCode::BAD_REQUEST,
             Self::IncorrectPassword => StatusCode::BAD_REQUEST,
             Self::InvalidPermissions => StatusCode::FORBIDDEN,
+            Self::Blocked => StatusCode::FORBIDDEN,
             Self::UserDoesNotExist => StatusCode::NOT_FOUND,
             Self::ChannelDoesNotExist => StatusCode::NOT_FOUND,
             Self::InviteDoesNotExist => StatusCode::NOT_FOUND,
+            Self::TrackDoesNotExist => StatusCode::NOT_FOUND,
             Self::InvalidChannelPosition => StatusCode::BAD_REQUEST,
             Self::CatNoParent => StatusCode::BAD_REQUEST,
             Self::ParentDoesNotExist => StatusCode::BAD_REQUEST,
             Self::InvalidPermissionBitSet => StatusCode::BAD_GATEWAY,
             Self::NotAGuildMember => StatusCode::FORBIDDEN,
             Self::AlreadyAGuildMember => StatusCode::BAD_REQUEST,
+            Self::InvalidRelationshipType => StatusCode::BAD_REQUEST
         }
     }
 

@@ -1,5 +1,5 @@
-use actix_web::{App, HttpServer};
 use actix_cors::Cors;
+use actix_web::{App, HttpServer};
 use mimalloc::MiMalloc;
 use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::util::SubscriberInitExt;
@@ -33,16 +33,14 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-        .allow_any_origin()
-        .allow_any_header()
-        .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE"])
-        .max_age(86400);
+            .allow_any_origin()
+            .allow_any_header()
+            .allowed_methods(vec!["GET", "POST", "PATCH", "DELETE"])
+            .max_age(86400);
 
-        App::new()
-        .configure(routes::app)
-        .wrap(cors)
+        App::new().configure(routes::app).wrap(cors)
     })
-        .bind("0.0.0.0:14000")?
-        .run()
-        .await
+    .bind("0.0.0.0:14000")?
+    .run()
+    .await
 }

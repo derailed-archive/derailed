@@ -1,5 +1,6 @@
 use serde::Serialize;
 use utoipa::ToSchema;
+use std::collections::HashMap;
 
 /// Represents a Derailed user.
 #[derive(Serialize, Debug, Clone, ToSchema)]
@@ -234,4 +235,21 @@ pub struct Invite {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub channel_id: Option<i64>,
     pub author_id: Option<i64>,
+}
+
+#[derive(Serialize, Debug, Clone, ToSchema)]
+pub struct DBTrack {
+    pub id: i64,
+    pub author_id: Option<i64>,
+    pub guild_id: Option<i64>,
+    pub origin_track_id: Option<i64>,
+    pub r#type: i32,
+    pub content: Option<String>,
+}
+
+#[derive(Serialize, Debug, Clone, ToSchema)]
+pub struct Relationship {
+    pub origin_user_id: i64,
+    pub target_user_id: i64,
+    pub relation: i32
 }
