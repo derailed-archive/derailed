@@ -248,29 +248,6 @@ pub struct DBTrack {
 }
 
 #[derive(Serialize, Debug, Clone, ToSchema)]
-pub struct Track {
-    pub id: i64,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub author: Option<User>,
-    #[serde(default)]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub guild: Option<Guild>,
-    pub origin_track_id: Option<i64>,
-    pub r#type: i32,
-    pub content: Option<String>,
-    // NOTE: HashMap<Emoji, AmountOfReactions>
-    pub reactions: HashMap<String, i64>
-}
-
-#[derive(Serialize, Debug, Clone, ToSchema)]
-pub struct TrackReaction {
-    pub user_id: i64,
-    pub track_id: i64,
-    pub emoji: String
-}
-
-#[derive(Serialize, Debug, Clone, ToSchema)]
 pub struct Relationship {
     pub origin_user_id: i64,
     pub target_user_id: i64,
