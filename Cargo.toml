@@ -1,5 +1,6 @@
 [workspace]
-members = ["api", "mineral", "brew"]
+members = ["mineral", "api", "brew", "gateway/apps/tokenrs/native/tokenrs",]
+resolver = "2"
 
 [profile.release]
 lto = true

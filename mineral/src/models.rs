@@ -1,9 +1,8 @@
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use utoipa::ToSchema;
-use std::collections::HashMap;
 
 /// Represents a Derailed user.
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct User {
     /// Unique Identity for this User.
     pub id: i64,
@@ -26,7 +25,7 @@ pub struct User {
     pub system: bool,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct GuildSlot {
     /// The Folder witholding this slot.
     pub folder_id: i64,
@@ -36,7 +35,7 @@ pub struct GuildSlot {
     pub position: i32,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct Folder {
     /// The id of this folder
     pub id: i64,
@@ -48,7 +47,7 @@ pub struct Folder {
     pub user_id: String,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct Settings {
     /// The theme this user uses. Either sinful
     /// `light` mode, or glorious `dark` mode.
@@ -62,7 +61,7 @@ pub struct Settings {
 }
 
 /// Represents a device which a user has.
-#[derive(Debug, Clone)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct Device {
     /// This device's snowflake id.
     pub id: i64,
@@ -90,7 +89,7 @@ pub struct DBGuild {
     pub permissions: i64,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct Guild {
     /// The chosen ID of this Guild.
     pub id: i64,
@@ -136,7 +135,7 @@ pub struct Guild {
     pub member: Option<Member>,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct Member {
     /// Originating User ID of this member
     pub user_id: i64,
@@ -153,7 +152,7 @@ pub struct Member {
     pub mute: bool,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct Role {
     pub id: i64,
     pub guild_id: i64,
@@ -165,7 +164,7 @@ pub struct Role {
     pub position: i32,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct Channel {
     pub id: i64,
     pub r#type: i32,
@@ -183,7 +182,7 @@ pub struct Channel {
     pub sync_parent_permissions: Option<bool>,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct Message {
     pub id: i64,
     pub channel_id: i64,
@@ -202,7 +201,7 @@ pub struct Message {
     pub flags: i64,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct ReadState {
     pub user_id: i64,
     pub channel_id: i64,
@@ -210,7 +209,7 @@ pub struct ReadState {
     pub last_message_id: Option<i64>,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct PermissionOverwrite {
     pub id: i64,
     pub channel_id: i64,
@@ -219,7 +218,7 @@ pub struct PermissionOverwrite {
     pub deny: i64,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct MessageReaction {
     pub message_id: i64,
     pub user_id: i64,
@@ -228,7 +227,7 @@ pub struct MessageReaction {
     pub created_at: time::OffsetDateTime,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct Invite {
     pub id: String,
     pub guild_id: i64,
@@ -237,17 +236,7 @@ pub struct Invite {
     pub author_id: Option<i64>,
 }
 
-#[derive(Serialize, Debug, Clone, ToSchema)]
-pub struct DBTrack {
-    pub id: i64,
-    pub author_id: Option<i64>,
-    pub guild_id: Option<i64>,
-    pub origin_track_id: Option<i64>,
-    pub r#type: i32,
-    pub content: Option<String>,
-}
-
-#[derive(Serialize, Debug, Clone, ToSchema)]
+#[derive(Serialize, Deserialize, Debug, Clone, ToSchema)]
 pub struct Relationship {
     pub origin_user_id: i64,
     pub target_user_id: i64,

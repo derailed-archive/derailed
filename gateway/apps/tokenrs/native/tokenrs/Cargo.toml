@@ -1,0 +1,16 @@
+[package]
+name = "tokenrs"
+version = "0.0.0"
+authors = []
+edition = "2021"
+
+[lib]
+name = "tokenrs"
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+base64 = "0.21.4"
+itsdangerous = "0.4.1"
+rustler = "0.28.0"
+bcrypt = "0.15.0"
