@@ -58,10 +58,84 @@ defmodule Derailed.WebSocket do
     end
   end
 
-  # TODO
   @spec make_ready(String.t()) :: {:ok, Derailed.Payload.Ready} | {:error, term()}
   defp make_ready(token) do
     device_id = Derailed.Token.get_device_id(token)
+
+    case Postgrex.prepare_execute(:db, "get_device", "SELECT * FROM devices WHERE id = $1;", [
+           device_id
+         ]) do
+      {:ok, _query, result} ->
+        device = Derailed.Utilities.map!(result)
+        user_id = Map.get(device, "user_id")
+
+        {_query, result} =
+          Postgrex.prepare_execute!(:db, "get_user", "SELECT * FROM users WHERE id = $1", [
+            user_id
+          ])
+
+        user = Derailed.Utilities.map!(result)
+        # immediately drop the password
+        user = Map.delete(user, "password")
+
+        {_query, guild_ids_result} =
+          Postgrex.prepare_execute!(
+            :db,
+            "get_user_guild_ids",
+            "SELECT id FROM guilds WHERE id IN (SELECT guild_id FROM guild_members WHERE user_id = $1);",
+            [user[:id]]
+          )
+
+        {_query, read_state_result} =
+          Postgrex.prepare_execute!(
+            :db,
+            "get_read_states",
+            "SELECT * FROM read_states WHERE user_id = $1;",
+            [user[:id]]
+          )
+
+        {_query, relationship_result} =
+          Postgrex.prepare_execute!(
+            :db,
+            "get_relationships",
+            "SELECT target_user_id, relation FROM relationships WHERE origin_user_id = $1;",
+            [user[:id]]
+          )
+
+        guild_ids = Derailed.Utilities.maps!(guild_ids_result)
+        read_states = Derailed.Utilities.maps!(read_state_result)
+        relationships = Derailed.Utilities.maps!(relationship_result)
+
+        session_id = Derailed.Token.make_ulid()
+
+        {:ok, unify_pid} = GenRegistry.lookup_or_start(Derailed.Unify, user_id, [user_id])
+
+        {:ok, session_pid} =
+          GenRegistry.start(
+            Derailed.Session,
+            session_id,
+            [
+              session_id,
+              user_id,
+              guild_ids
+            ]
+          )
+
+        Derailed.Session.start(session_pid)
+        Derailed.Unify.subscribe(unify_pid, session_pid)
+
+        {:ok,
+         %Derailed.Payload.Ready{
+           session_id: session_id,
+           user: user,
+           guild_ids: guild_ids,
+           read_states: read_states,
+           relationships: relationships
+         }}
+
+      {:error, _reason} ->
+        {:error, :invalid_token}
+    end
   end
 
   # cowboy functions

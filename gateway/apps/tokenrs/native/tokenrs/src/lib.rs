@@ -4,6 +4,7 @@ use base64::{
     Engine as _,
 };
 use itsdangerous::{default_builder, IntoTimestampSigner, TimestampSigner};
+use ulid::Ulid;
 
 pub static B64: engine::GeneralPurpose =
     engine::GeneralPurpose::new(&alphabet::URL_SAFE, general_purpose::NO_PAD);
@@ -35,7 +36,12 @@ fn verify_token(token: String, password: String) -> bool {
         false
     } else {
         true
-}
+    }
 }
 
-rustler::init!("Elixir.Derailed.Token", [get_device_id]);
+#[rustler::nif]
+fn make_ulid() -> String {
+    Ulid::new().to_string()
+}
+
+rustler::init!("Elixir.Derailed.Token", [get_device_id, verify_token, make_ulid]);

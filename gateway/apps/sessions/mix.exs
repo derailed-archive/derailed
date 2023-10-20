@@ -1,9 +1,9 @@
-defmodule Derailed.WebSocket.MixProject do
+defmodule Derailed.Session.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :websocket,
+      app: :sessions,
       version: "0.0.0",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
@@ -19,22 +19,16 @@ defmodule Derailed.WebSocket.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {Derailed.WebSocket.Application, []}
+      mod: {Derailed.Session.Application, []}
     ]
   end
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:cowboy, "~> 2.10"},
-      {:jsonrs, "~> 0.3.1"},
-      {:ex_json_schema, "~> 0.10.1"},
-      {:postgrex, "~> 0.17.2"},
-      {:gen_registry, "~> 1.3.0"},
-      {:payloads, in_umbrella: true},
-      {:tokenrs, in_umbrella: true},
-      {:utils, in_umbrella: true},
-      {:sessions, in_umbrella: true}
+      {:zen_monitor, "~> 2.1.0"},
+      {:manifold, "~> 1.6.0"},
+      {:gen_registry, "~> 1.3.0"}
     ]
   end
 end

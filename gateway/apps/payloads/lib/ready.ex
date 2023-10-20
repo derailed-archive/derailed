@@ -2,7 +2,7 @@ defmodule Derailed.Payload.Ready do
   defstruct [
     :session_id,
     :user,
-    :guilds,
+    :guild_ids,
     :read_states,
     :relationships
   ]
