@@ -1,9 +1,9 @@
-defmodule Derailed.Session.MixProject do
+defmodule Derailed.Guild.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :sessions,
+      app: :guilds,
       version: "0.0.0",
       build_path: "../../_build",
       config_path: "../../config/config.exs",
@@ -19,7 +19,7 @@ defmodule Derailed.Session.MixProject do
   def application do
     [
       extra_applications: [:logger],
-      mod: {Derailed.Session.Application, []}
+      mod: {Derailed.Guild.Application, []}
     ]
   end
 
@@ -29,7 +29,8 @@ defmodule Derailed.Session.MixProject do
       {:zen_monitor, "~> 2.1.0"},
       {:manifold, "~> 1.6.0"},
       {:gen_registry, "~> 1.3.0"},
-      {:guilds, in_umbrella: true}
+      {:postgrex, "~> 0.17.2"},
+      {:utils, in_umbrella: true}
     ]
   end
 end

@@ -21,7 +21,8 @@ defmodule Derailed.WebSocket do
       # 1 => :hello,
       2 => :ready,
       # 3 => :resume,
-      4 => :ack
+      # 4 => :ping,
+      5 => :ack
     }[op]
   end
 
@@ -108,8 +109,6 @@ defmodule Derailed.WebSocket do
 
         session_id = Derailed.Token.make_ulid()
 
-        {:ok, unify_pid} = GenRegistry.lookup_or_start(Derailed.Unify, user_id, [user_id])
-
         {:ok, session_pid} =
           GenRegistry.start(
             Derailed.Session,
@@ -117,12 +116,12 @@ defmodule Derailed.WebSocket do
             [
               session_id,
               user_id,
-              guild_ids
+              guild_ids,
+              self()
             ]
           )
 
         Derailed.Session.start(session_pid)
-        Derailed.Unify.subscribe(unify_pid, session_pid)
 
         {:ok,
          %Derailed.Payload.Ready{
@@ -131,7 +130,7 @@ defmodule Derailed.WebSocket do
            guild_ids: guild_ids,
            read_states: read_states,
            relationships: relationships
-         }}
+         }, session_id, session_pid}
 
       {:error, _reason} ->
         {:error, :invalid_token}
@@ -249,8 +248,9 @@ defmodule Derailed.WebSocket do
           end
 
         case make_ready(token) do
-          {:ok, ready} ->
-            {:reply, uncode(ready, state.compressor), state}
+          {:ok, ready, session_id, session_pid} ->
+            {:reply, uncode(ready, state.compressor),
+             %{state | "session_id" => session_id, "session_pid" => session_pid}}
 
           {:error, reason} ->
             {:close, 5004, Jsonrs.encode!(reason)}
@@ -258,5 +258,16 @@ defmodule Derailed.WebSocket do
     end
   end
 
-  # TODO: websocket_info
+  def websocket_info(message, state) do
+    case message.t do
+      "USER_DELETE" ->
+        GenRegistry.stop(Derailed.Session, state.session_id)
+        GenRegistry.stop(Derailed.Unify, state.user_id)
+        {:close, 5005, "User has been deleted"}
+
+      _ ->
+        message = Map.put(message, "op", 0)
+        {:reply, uncode(message, state.compressor), state}
+    end
+  end
 end
