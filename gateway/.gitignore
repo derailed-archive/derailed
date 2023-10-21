@@ -23,3 +23,5 @@ erl_crash.dump
 /tmp/
 
 priv/
+
+config/runtime.exs

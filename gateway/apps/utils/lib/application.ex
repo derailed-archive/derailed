@@ -8,7 +8,7 @@ defmodule Derailed.Utility.Application do
   @impl true
   def start(_type, _args) do
     children = [
-      {Postgrex, Application.fetch_env!(:derailed, :db)}
+      {Postgrex, Application.fetch_env!(:utils, :db)}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
