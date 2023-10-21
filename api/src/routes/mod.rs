@@ -2,7 +2,7 @@ use actix_web::{services, web};
 mod common_models;
 mod guild;
 mod invite;
-mod relationship;
+// mod relationship;
 mod user;
 pub use common_models::*;
 
@@ -15,7 +15,7 @@ pub fn app(cfg: &mut web::ServiceConfig) {
         user::get_user_service,
         user::modify_current_user_service,
     ];
-    let s_relationships = services![relationship::push_relationship,];
+    // let s_relationships = services![relationship::push_relationship,];
     let s_guilds = services![
         guild::create_guild,
         guild::modify_guild,
@@ -30,7 +30,7 @@ pub fn app(cfg: &mut web::ServiceConfig) {
     ];
 
     cfg.service(s_users);
-    cfg.service(s_relationships);
+    // cfg.service(s_relationships);
     cfg.service(s_guilds);
     cfg.service(s_invites);
 }
