@@ -24,4 +24,6 @@ erl_crash.dump
 
 priv/
 
-config/runtime.exs
+runtime.exs
+
+test.py

@@ -4,12 +4,15 @@ defmodule Derailed.Guild.Application do
   @moduledoc false
 
   use Application
+  require Logger
 
   @impl true
   def start(_type, _args) do
     children = [
       {GenRegistry, worker_module: Derailed.Guild}
     ]
+
+    Logger.info("Starting Guild application")
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

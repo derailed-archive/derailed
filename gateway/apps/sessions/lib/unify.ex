@@ -1,6 +1,7 @@
 # A unified GenServer to handle incoming messages to user-based endpoints.
 defmodule Derailed.Unify do
   use GenServer
+  require Logger
 
   # user functions
   def start_link(user_id) do
@@ -11,7 +12,7 @@ defmodule Derailed.Unify do
     {:ok,
      %{
        id: user_id,
-       sessions: Map.new(),
+       sessions: MapSet.new(),
        references: Map.new()
      }}
   end
@@ -32,12 +33,18 @@ defmodule Derailed.Unify do
   end
 
   # back/core
-  def handle_call({:publish, type, message}, _from, state) do
+  def handle_call({:publish, type, message}, from, state) do
+    Logger.debug(
+      "[unify-#{inspect(state.id)}] Publishing call [(#{inspect(type)})-#{inspect(message)}-(#{inspect(from)})]"
+    )
+
     Manifold.send(state.sessions, %{"t" => type, "d" => message})
     {:reply, :ok, state}
   end
 
   def handle_cast({:subscribe, session_pid}, state) do
+    Logger.debug("[unify-#{inspect(state.id)}] Subscribing #{inspect(session_pid)}")
+
     ref = ZenMonitor.monitor(session_pid)
 
     {:noreply,
@@ -49,6 +56,8 @@ defmodule Derailed.Unify do
   end
 
   def handle_cast({:unsubscribe, session_pid}, state) do
+    Logger.debug("[unify-#{inspect(state.id)}] Unsubscribing #{inspect(session_pid)}")
+
     {:noreply,
      %{
        state
@@ -58,6 +67,12 @@ defmodule Derailed.Unify do
   end
 
   def handle_info({:DOWN, _ref, :process, pid, {:zen_monitor, _reason}}, state) do
+    Logger.debug("[unify-#{inspect(state.id)}] Session #{inspect(pid)} is DOWN")
+
+    if MapSet.delete(state.sessions, pid) == MapSet.new() do
+      GenRegistry.stop(Derailed.Unify, state.id)
+    end
+
     {:noreply,
      %{
        state

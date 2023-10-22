@@ -1,5 +1,6 @@
 defmodule Derailed.Guild do
   use GenServer
+  require Logger
 
   def start_link(id) do
     GenServer.start_link(__MODULE__, id)
@@ -33,10 +34,15 @@ defmodule Derailed.Guild do
   end
 
   # server
-  def handle_call({:publish, type, message}, _from, %{sessions: sessions} = state) do
+  def handle_call({:publish, type, message}, from, %{sessions: sessions} = state) do
+    Logger.debug(
+      "[guild-#{inspect(state.id)}] Publishing call to Guild [#{inspect(type)}][#{inspect(message)}](#{inspect(from)})"
+    )
+
     Enum.each(sessions, &Manifold.send(&1.pid, %{"t" => type, "d" => message}))
 
     if type == "GUILD_MODIFY" do
+      Logger.debug("[guild-#{inspect(state.id)}] Modifying Guild due to event type")
       {:reply, :ok, %{state | guild: message}}
     else
       {:reply, :ok, state}
@@ -44,6 +50,8 @@ defmodule Derailed.Guild do
   end
 
   def handle_cast({:subscribe, session_pid}, state) do
+    Logger.debug("[guild-#{inspect(state.id)}] Subscription added for #{inspect(session_pid)}")
+
     ref = ZenMonitor.monitor(session_pid)
 
     Manifold.send(session_pid, %{"t" => "GUILD_CREATE", "d" => state.guild})
@@ -53,6 +61,8 @@ defmodule Derailed.Guild do
   end
 
   def handle_cast({:unsubscribe, session_pid}, state) do
+    Logger.debug("[guild-#{inspect(state.id)}] Unsubscribing #{inspect(session_pid)}")
+
     session = Map.get(state.sessions, session_pid)
     ZenMonitor.demonitor(session.ref)
     sessions = Map.delete(state.sessions, session_pid)
@@ -62,5 +72,15 @@ defmodule Derailed.Guild do
     else
       {:noreply, %{state | sessions: sessions}}
     end
+  end
+
+  def handle_info({:DOWN, _ref, :process, pid, {:zen_monitor, _reason}}, state) do
+    Logger.debug("[guild-#{inspect(state.id)}] Session #{pid} is DOWN, unsubscribing")
+
+    {:noreply,
+     %{
+       state
+       | sessions: MapSet.delete(state.sessions, pid)
+     }}
   end
 end

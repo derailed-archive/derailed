@@ -3,7 +3,7 @@ defmodule Derailed.Token do
     otp_app: :tokenrs,
     crate: :tokenrs
 
-  @spec get_device_id(String.t()) :: integer()
+  @spec get_device_id(String.t()) :: integer() | {:error, term()}
   def get_device_id(_token), do: :erlang.nif_error(:nif_not_loaded)
 
   @spec verify_token(String.t(), String.t()) :: boolean()

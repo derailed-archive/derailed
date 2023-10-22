@@ -12,7 +12,7 @@ defmodule Derailed.WebSocket.Cowboy do
     {:ok, _} =
       :cowboy.start_clear(
         :derailed,
-        [{:port, 14000}],
+        [{:port, 15000}],
         %{
           env: %{
             dispatch: get_dispatch()

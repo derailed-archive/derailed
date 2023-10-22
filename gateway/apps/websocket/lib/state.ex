@@ -8,6 +8,7 @@ defmodule State do
     :zlib_enabled,
     :heartbeat_interval,
     :heartbeat_ref,
+    :heartbeat_cycle_finished,
     :presence,
     :compressor
   ]

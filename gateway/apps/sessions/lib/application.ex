@@ -4,6 +4,7 @@ defmodule Derailed.Session.Application do
   @moduledoc false
 
   use Application
+  require Logger
 
   @impl true
   def start(_type, _args) do
@@ -11,6 +12,8 @@ defmodule Derailed.Session.Application do
       {GenRegistry, worker_module: Derailed.Session},
       {GenRegistry, worker_module: Derailed.Unify}
     ]
+
+    Logger.info("Starting Session & Unify application")
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

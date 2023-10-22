@@ -4,6 +4,7 @@ defmodule Derailed.WebSocket.Application do
   @moduledoc false
 
   use Application
+  require Logger
 
   @impl true
   def start(_type, _args) do
@@ -13,6 +14,8 @@ defmodule Derailed.WebSocket.Application do
         start: {Derailed.WebSocket.Cowboy, :start_link, []}
       }
     ]
+
+    Logger.info("WebSocket application is starting")
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
