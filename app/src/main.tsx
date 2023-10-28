@@ -7,6 +7,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 
 const Register = React.lazy(() => import("./pages/Register"))
 const Login = React.lazy(() => import("./pages/Login"))
+const WsTest = React.lazy(() => import("./pages/WsTest"))
 
 
 const router = createBrowserRouter([
@@ -17,6 +18,10 @@ const router = createBrowserRouter([
   {
     path: "/login",
     element: <React.Suspense children={<Login />}></React.Suspense>
+  },
+  {
+    path: "/",
+    element: <React.Suspense children={<WsTest />}></React.Suspense>
   }
 ])
 
