@@ -69,10 +69,17 @@ export default class Gateway {
                 }
             }
         }
-        this.ws.onerror = (_ev) => {
+        // TODO: resumes
+        this.ws.onclose = (_ev) => {
             if (this.hbInterval !== 0) {
                 clearInterval(this.hbInterval)
             }
+
+            this.ws = undefined
+            this.connected = false
+            this.connect()
+        }
+        this.ws.onerror = (_ev) => {
             console.error("[WS] >> Error with websocket Gateway occured.")
         }
     }
