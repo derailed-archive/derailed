@@ -12,7 +12,26 @@ export default defineConfig({
                     name: "Inter",
                     provider: "google"
                 },
-
+                {
+                  name: '"Noto Sans"',
+                  provider: "none"
+                },
+                {
+                    name: '"Helvetica Neue"',
+                    provider: "none"
+                },
+                {
+                    name: "Helvetica",
+                    provider: "none"
+                },
+                {
+                    name: "Arial",
+                    provider: "none"
+                },
+                {
+                    name: "sans-serif",
+                    provider: "none"
+                }
             ]
         }
     }),
