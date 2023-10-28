@@ -51,29 +51,27 @@ export default function Login() {
     }
 
     return (
-      <main className="flex min-h-screen bg-no-repeat antialiased bg-cover bg-trains-away font-primary">
+      <main className="flex min-h-screen bg-no-repeat antialiased bg-cover bg-center bgi-[assets/trains-away.jpg] font-primary">
         {displayError && (
             <div className="text-center">
                 {error}
             </div>
         )}
-        <form className="flex flex-col p-10 rounded items-center m-auto bg-quite-blue justify-center text-center gap-6 text-blackbird" onSubmit={onSubmit}>
-            <h1 className="text-unrailed text-2xl max-w-xl">
-                Welcome back!
+        <form className="flex flex-col p-14 rounded-3xl items-left m-auto justify-left text-center gap-6 text-blackbird bg-some-blue" onSubmit={onSubmit}>
+            <h1 className="text-gray-300 text-2xl max-w-xl font-900">
+                Welcome back to Derailed!
             </h1>
             <section className="flex flex-col gap-0.5 m-auto">
-                <label className="text-left">Username</label>
-                <input className="bg-quite-more-blue rounded p-1" type="text" id="username" minLength={1} maxLength={32} onChange={(event) => {setUsername(event.target.value)}} required />
+                <input className="bg-quite-more-blue text-some-gray border-20 border-white text-sm rounded-xl border-none p-3.5" size={37} placeholder="Username" type="text" id="username" minLength={1} maxLength={32} onChange={(event) => {setUsername(event.target.value)}} required />
             </section>
             <section className="flex flex-col gap-0.5 m-auto">
-                <label className="text-left">Password</label>
-                <input className="bg-quite-more-blue rounded p-1" type="password" id="password" minLength={1} maxLength={32} onChange={(event) => {setPassword(event.target.value)}} required />
+                <input className="bg-quite-more-blue text-some-gray text-sm rounded-xl border-none p-3.5" size={37} placeholder="Password" type="password" id="password" minLength={1} maxLength={32} onChange={(event) => {setPassword(event.target.value)}} required />
             </section>
-            <button type="submit" className="bg-quite-more-blue text-xl m-auto py-2 px-8 rounded-2xl">
+            <button type="submit" className="bg-unrailed text-quite-more-blue text-lg m-auto py-2 px-8 rounded-2xl">
                 Login
             </button>
-            <div>
-                Don't have an account? <a className="text-unrailed font-medium" href="/register">Register</a> instead.
+            <div className="font-semibold text-gray-300 text-sm">
+                Don't have an account? <a className="text-unrailed font-semibold" href="/register">Register</a> instead.
             </div>
         </form>
       </main>

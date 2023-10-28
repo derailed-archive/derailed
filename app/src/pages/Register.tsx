@@ -51,31 +51,29 @@ export default function Register() {
     }
 
     return (
-      <main className="flex min-h-screen bg-no-repeat antialiased bg-cover bg-trains-away font-primary">
-        {displayError && (
-            <div className="text-center">
-                {error}
-            </div>
-        )}
-        <form className="flex flex-col p-10 px-20 py-12 rounded-xl items-center m-auto bg-quite-blue justify-center text-center gap-6.5 text-blackbird" onSubmit={onSubmit}>
-            <h2 className="text-unrailed text-3xl max-w-2xl">
-                Welcome to Derailed!
-            </h2>
-            <section className="flex flex-col gap-0.5 m-auto">
-                <label className="text-left text-lg">Username</label>
-                <input className="bg-quite-more-blue rounded p-2 border-none text-blackbird" type="text" id="username" minLength={1} maxLength={32} onChange={(event) => {setUsername(event.target.value)}} required />
-            </section>
-            <section className="flex flex-col gap-0.5 m-auto">
-                <label className="text-left text-lg">Password</label>
-                <input className="bg-quite-more-blue rounded p-2 border-none text-blackbird" type="password" id="password" minLength={1} maxLength={32} onChange={(event) => {setPassword(event.target.value)}} required />
-            </section>
-            <button type="submit" className="bg-quite-more-blue text-unrailed hover:text-quite-more-blue hover:bg-unrailed text-xl m-auto py-2 px-8 rounded-2xl">
-                Register
-            </button>
-            <div>
-                Already have an account? <a className="text-unrailed font-medium text-lg" href="/login">Login</a> instead.
-            </div>
-        </form>
-      </main>
-    )
+        <main className="flex min-h-screen bg-no-repeat antialiased bg-cover bg-center bgi-[assets/trains-away.jpg] font-primary">
+          {displayError && (
+              <div className="text-center">
+                  {error}
+              </div>
+          )}
+          <form className="flex flex-col p-14 rounded-3xl items-left m-auto justify-left text-center gap-6 text-blackbird bg-some-blue" onSubmit={onSubmit}>
+              <h1 className="text-gray-300 text-2xl max-w-xl font-900">
+                  Welcome to Derailed!
+              </h1>
+              <section className="flex flex-col gap-0.5 m-auto">
+                  <input className="bg-quite-more-blue text-some-gray border-20 border-white text-sm rounded-xl border-none p-3.5" size={37} placeholder="Username" type="text" id="username" minLength={1} maxLength={32} onChange={(event) => {setUsername(event.target.value)}} required />
+              </section>
+              <section className="flex flex-col gap-0.5 m-auto">
+                  <input className="bg-quite-more-blue text-some-gray text-sm rounded-xl border-none p-3.5" size={37} placeholder="Password" type="password" id="password" minLength={1} maxLength={32} onChange={(event) => {setPassword(event.target.value)}} required />
+              </section>
+              <button type="submit" className="bg-unrailed text-quite-more-blue text-lg m-auto py-2 px-8 rounded-2xl">
+                  Register
+              </button>
+              <div className="font-semibold text-gray-300 text-sm">
+                  Already have an account? <a className="text-unrailed font-semibold" href="/login">Login</a> instead.
+              </div>
+          </form>
+        </main>
+      )
   }
